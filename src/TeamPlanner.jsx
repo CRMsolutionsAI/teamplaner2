@@ -824,7 +824,7 @@ export default function App() {
           }}
           onDismiss={() => setResumePrompt(null)} />
       )}
-    </>
+    </>}
     </div>
   );
 }
@@ -1339,7 +1339,7 @@ function DayCell({ dayData, wts, empColor, onUpdate, date, onStartDay, onOpenEnd
     _stratDrag = null; setStratDragOver(false);
   };
 
-  const totalFact = tasks.reduce((s, t) => { const m = parseMinutes(t.timeRange); return s + (m ?? parseInt(t.fact) || 0); }, 0);
+  const totalFact = tasks.reduce((s, t) => { const m = parseMinutes(t.timeRange); return s + (m ?? (parseInt(t.fact) || 0)); }, 0);
   const doneCnt = tasks.filter(t => t.done).length;
 
   return (
@@ -1806,7 +1806,7 @@ function DayViewEmployee({ emp, dayData, wts, onUpdate }) {
   };
 
   const doneCnt = tasks.filter(t => t.done).length;
-  const totalFact = tasks.reduce((s, t) => { const m = parseMinutes(t.timeRange); return s + (m ?? parseInt(t.fact) || 0); }, 0);
+  const totalFact = tasks.reduce((s, t) => { const m = parseMinutes(t.timeRange); return s + (m ?? (parseInt(t.fact) || 0)); }, 0);
   const totalPlan = tasks.reduce((s, t) => s + (parseInt(t.plan) || 0), 0);
 
   return (
@@ -2411,7 +2411,7 @@ function Analytics({ wd, emps, wts, dates, cw }) {
       day.tasks.forEach(t => {
         total++; if (t.done) done++;
         totalPlan += parseInt(t.plan) || 0;
-        const m = parseMinutes(t.timeRange) ?? parseInt(t.fact) || 0;
+        const m = parseMinutes(t.timeRange) ?? (parseInt(t.fact) || 0);
         totalFact += m; dayFact[di] += m;
         if (t.workType && m > 0) wtBreak[t.workType] = (wtBreak[t.workType] || 0) + m;
       });
