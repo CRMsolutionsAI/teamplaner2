@@ -1,9 +1,35 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { supabase } from "./supabase.js";
 
 const store = {
-  async get(k) { try { const r = await window.storage.get(k); return r ? JSON.parse(r.value) : null; } catch { return null; } },
-  async set(k, v) { try { await window.storage.set(k, JSON.stringify(v)); } catch(e) { console.error(e); } }
+  async get(k) {
+    try {
+      const { data } = await supabase.from("storage").select("value").eq("key", k).maybeSingle();
+      return data ? JSON.parse(data.value) : null;
+    } catch(e) { console.error("[store.get]", e); return null; }
+  },
+  async set(k, v) {
+    try {
+      await supabase.from("storage").upsert({ key: k, value: JSON.stringify(v) }, { onConflict: "key" });
+    } catch(e) { console.error("[store.set]", e); }
+  },
+  async list(prefix) {
+    try {
+      const { data } = await supabase.from("storage").select("key").like("key", `${prefix}%`);
+      return (data || []).map(r => r.key);
+    } catch(e) { return []; }
+  },
 };
+
+async function logActivity(user, action, details = {}) {
+  if (!user?.name) return;
+  try {
+    await supabase.from("activity_logs").insert({
+      user_name: user.name, user_emoji: user.emoji || "👤",
+      user_color: user.color || "#A8D8EA", action, details,
+    });
+  } catch(e) { console.error("[log]", e); }
+}
 
 function parseMinutes(str) {
   if (!str) return null;
