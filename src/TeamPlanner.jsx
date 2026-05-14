@@ -1,44 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 
-// ── Supabase Store ──────────────────────────────────────────
-import { supabase } from "./supabase.js";
-
 const store = {
-  async get(k) {
-    try {
-      const { data, error } = await supabase.from("storage").select("value").eq("key", k).maybeSingle();
-      if (error) throw error;
-      return data ? JSON.parse(data.value) : null;
-    } catch(e) { console.error("[store.get]", e); return null; }
-  },
-  async set(k, v) {
-    try {
-      const { error } = await supabase.from("storage").upsert({ key: k, value: JSON.stringify(v) }, { onConflict: "key" });
-      if (error) throw error;
-    } catch(e) { console.error("[store.set]", e); }
-  },
-  async list(prefix) {
-    try {
-      const { data, error } = await supabase.from("storage").select("key").like("key", `${prefix}%`);
-      if (error) throw error;
-      return (data || []).map(r => r.key);
-    } catch(e) { console.error("[store.list]", e); return []; }
-  },
+  async get(k) { try { const r = await window.storage.get(k); return r ? JSON.parse(r.value) : null; } catch { return null; } },
+  async set(k, v) { try { await window.storage.set(k, JSON.stringify(v)); } catch(e) { console.error(e); } }
 };
-
-// ── Activity Logger ──────────────────────────────────────────
-async function logActivity(user, action, details = {}) {
-  if (!user?.name) return;
-  try {
-    await supabase.from("activity_logs").insert({
-      user_name: user.name,
-      user_emoji: user.emoji || "👤",
-      user_color: user.color || "#A8D8EA",
-      action,
-      details,
-    });
-  } catch(e) { console.error("[log]", e); }
-}
 
 function parseMinutes(str) {
   if (!str) return null;
@@ -71,7 +36,8 @@ const EMP_PALETTE = ["#F4B8D1","#A8D8EA","#B8E0C8","#FFD9A8","#C5B8E8","#F9C8C8"
 const EMOJIS = ["👤","👩","👨","👩‍💼","👨‍💼","🧑‍💼","🧑","⭐","🌟","💫","🔥","❤️","💚","💙","💜","🎯","📋","✅","🚀","💡","🎨","💼","📊","🎓","👑","🦁","🐱","🦊","🌸","🍀","🌈","⚡","🏆","🌙","☀️","🎪","🦋","🌺","🎬","🧩"];
 
 function mkId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
-function emptyTask(createdBy = "") { return { id: mkId(), task: "", result: "", priority: "", timeRange: "", plan: "", fact: "", workType: "", done: false, status: "", isFocus: false, fromStrategy: false, taskType: "", sessions: [], timerStart: null, createdAt: new Date().toISOString(), createdBy, updatedAt: new Date().toISOString() }; }
+function emptyTask(createdBy = "") { return { id: mkId(), task: "", result: "", priority: "", timeRange: "", plan: "", fact: "", workType: "", done: false, status: "", isFocus: false, fromStrategy: false, taskType: "", sessions: [], timerStart: null, createdAt: new Date().toISOString(), createdBy, updatedAt: new Date().toISOString(), deadline: null, comments: [] }; }
+function emptyProject() { return { id: mkId(), name: "", color: "#C5B8E8", emoji: "📁", description: "", tasks: [], createdAt: new Date().toISOString() }; }
 
 // Module-level drag payload for strategy → day drops
 let _stratDrag = null;
@@ -240,8 +206,8 @@ function getTzLabel(tzId) {
 }
 
 const INIT_EMPS = [
-  { id: "e1", name: "Наташа", color: "#F4B8D1", emoji: "👩", myTz: "Asia/Makassar", watchTz: "Europe/Kiev" },
-  { id: "e2", name: "Света",  color: "#A8D8EA", emoji: "👩‍💼", myTz: "Europe/Kiev",    watchTz: "Europe/Madrid" }
+  { id: "e1", name: "Наташа", color: "#F4B8D1", emoji: "👩", myTz: "Asia/Makassar", watchTz: "Europe/Kiev", workStart: "09:00", workEnd: "18:00" },
+  { id: "e2", name: "Света",  color: "#A8D8EA", emoji: "👩‍💼", myTz: "Europe/Kiev", watchTz: "Europe/Madrid", workStart: "09:00", workEnd: "18:00" }
 ];
 const INIT_WTS = [{ id: "wt1", name: "Клиент" }, { id: "wt2", name: "Коммуникация" }, { id: "wt3", name: "Стратегия" }];
 
@@ -413,13 +379,36 @@ function PersonalClock({ emps }) {
 }
 
 
+/* ═══ ERROR BOUNDARY ════════════════════════════════════════ */
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { hasError: false, error: null }; }
+  static getDerivedStateFromError(error) { return { hasError: true, error }; }
+  componentDidCatch(error, info) { console.error("[ErrorBoundary]", error, info); }
+  render() {
+    if (!this.state.hasError) return this.props.children;
+    return (
+      <div style={{ minHeight: "100vh", background: "#0F0F0F", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Golos Text',sans-serif" }}>
+        <div style={{ maxWidth: 480, textAlign: "center", padding: 40 }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: "#F5E8CE", marginBottom: 8 }}>Что-то пошло не так</div>
+          <div style={{ fontSize: 13, color: "#6B7280", marginBottom: 24, lineHeight: 1.6 }}>
+            Произошла неожиданная ошибка. Ваши данные в безопасности.
+          </div>
+          <div style={{ background: "#1A1A1A", borderRadius: 8, padding: "12px 16px", marginBottom: 24, textAlign: "left", fontSize: 11, color: "#EF4444", fontFamily: "monospace", wordBreak: "break-all" }}>
+            {this.state.error?.message || "Unknown error"}
+          </div>
+          <button onClick={() => window.location.reload()}
+            style={{ background: "#C8922A", color: "#fff", border: "none", borderRadius: 10, padding: "12px 28px", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+            🔄 Перезагрузить приложение
+          </button>
+        </div>
+      </div>
+    );
+  }
+}
+
 export default function App() {
   const [tab, setTab] = useState("planner");
-  const [currentUser, setCurrentUser] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("tp_user") || "null"); } catch { return null; }
-  });
-  const [onlineUsers, setOnlineUsers] = useState([]);
-  const presenceChannel = useRef(null);
   const [cw, setCw] = useState(getCurrentWeek());
   const [emps, setEmps] = useState(INIT_EMPS);
   const [wts, setWts] = useState(INIT_WTS);
@@ -428,6 +417,9 @@ export default function App() {
   const [allKeys, setAllKeys] = useState([]);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState(() => Math.min(5, Math.max(0, (new Date().getDay() + 6) % 7)));
+  const [projects, setProjects] = useState([]);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const saveTimer = useRef(null);
   const wkey = `week:${cw.year}-${cw.week}`;
 
@@ -436,6 +428,7 @@ export default function App() {
       const e = migrateEmps(await store.get("cfg:emps")); if (e?.length) setEmps(e);
       const w = await store.get("cfg:wts"); if (w?.length) setWts(w);
       const k = await store.get("cfg:keys"); if (k) setAllKeys(k);
+      const p = await store.get("cfg:projects"); if (p?.length) setProjects(p);
     })();
   }, []);
 
@@ -480,33 +473,7 @@ export default function App() {
 
   const saveEmps = useCallback((e) => { setEmps(e); store.set("cfg:emps", e); }, []);
   const saveWts = useCallback((w) => { setWts(w); store.set("cfg:wts", w); }, []);
-
-  // ── Presence ─────────────────────────────────────────────
-  useEffect(() => {
-    if (!currentUser) return;
-    const getDeviceId = () => {
-      const s = localStorage.getItem("tp_device_id");
-      if (s) return s;
-      const fp = [navigator.userAgent, screen.width+"x"+screen.height, Intl.DateTimeFormat().resolvedOptions().timeZone].join("|");
-      let h = 0; for (let i=0;i<fp.length;i++){h=((h<<5)-h)+fp.charCodeAt(i);h|=0;}
-      const id = "dev_"+Math.abs(h).toString(36);
-      localStorage.setItem("tp_device_id", id); return id;
-    };
-    const deviceId = getDeviceId();
-    const ch = supabase.channel("presence:tp", { config: { presence: { key: deviceId } } });
-    ch.on("presence", { event: "sync" }, () => {
-      const state = ch.presenceState();
-      const seen = new Set();
-      const unique = Object.values(state).map(a=>a[0]).filter(u=>u&&!seen.has(u.userId)&&seen.add(u.userId));
-      setOnlineUsers(unique);
-    });
-    ch.subscribe(async status => {
-      if (status === "SUBSCRIBED") await ch.track({ userId: currentUser.id, name: currentUser.name, emoji: currentUser.emoji, color: currentUser.color, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone });
-    });
-    presenceChannel.current = ch;
-    logActivity(currentUser, "открыл приложение");
-    return () => supabase.removeChannel(ch);
-  }, [currentUser]);
+  const saveProjects = useCallback((p) => { setProjects(p); store.set("cfg:projects", p); }, []);
 
   const [resumePrompt, setResumePrompt] = useState(null);
   const inactivityTimer = useRef(null);
@@ -617,10 +584,15 @@ export default function App() {
 
   const dates = getWeekDates(cw.year, cw.week);
 
+  const DEFAULT_TABS = [["planner","📅 Неделя"],["day","📆 День"],["projects","🗂 Проекты"],["tasks","📋 Задачи"],["calendar","🗓 Календарь"],["strategy","🎯 Стратегия"],["analytics","📊 Аналитика"],["settings","⚙️ Настройки"]];
+  const [tabOrder, setTabOrder] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("tp_tab_order") || "null") || DEFAULT_TABS.map(t=>t[0]); } catch { return DEFAULT_TABS.map(t=>t[0]); }
+  });
+  const [dragTabIdx, setDragTabIdx] = useState(null);
+  const orderedTabs = tabOrder.map(k => DEFAULT_TABS.find(t => t[0] === k)).filter(Boolean);
+
   return (
     <div style={{ fontFamily: "'Golos Text','Segoe UI',sans-serif", minHeight: "100vh", background: C.bg, display: "flex", flexDirection: "column" }}>
-      {!currentUser && <LoginScreen emps={emps} onSelect={emp => { setCurrentUser(emp); localStorage.setItem("tp_user", JSON.stringify(emp)); }} />}
-      {currentUser && <>
       <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&display=swap" rel="stylesheet" />
       <style>{`
         @keyframes blink { 0%,100%{opacity:.6} 50%{opacity:.15} }
@@ -737,20 +709,27 @@ export default function App() {
           )}
         </div>
 
-        {onlineUsers.length > 0 && (
-          <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,.07)", borderRadius: 9, padding: "5px 10px" }}>
-            <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#22C55E", boxShadow: "0 0 6px #22C55E" }} />
-            <span style={{ fontSize: 11, color: "#9CA3AF", fontWeight: 600 }}>{onlineUsers.length} онлайн</span>
-            <div style={{ display: "flex", gap: 3 }}>
-              {onlineUsers.map(u => <span key={u.userId} title={`${u.name} · ${u.timezone||""}`} style={{ fontSize: 16 }}>{u.emoji||"👤"}</span>)}
-            </div>
-          </div>
-        )}
         <PersonalClock emps={emps} />
 
+        {/* Поиск и уведомления */}
+        <NotifBell wd={wd} emps={emps} projects={projects} open={notifOpen} onToggle={() => setNotifOpen(p=>!p)} onClose={() => setNotifOpen(false)} />
+        <button onClick={() => setSearchOpen(p=>!p)}
+          style={{ background: searchOpen ? "rgba(200,146,42,.15)" : "rgba(255,255,255,.07)", border: `1px solid ${searchOpen ? "rgba(200,146,42,.4)" : "transparent"}`, color: searchOpen ? C.gold : "#9CA3AF", borderRadius: 8, padding: "5px 10px", cursor: "pointer", fontSize: 16, fontFamily: "inherit" }}
+          title="Поиск по задачам (Ctrl+K)">🔍</button>
+
         <nav className="nav-tabs" style={{ marginLeft: "auto", display: "flex", gap: 2 }}>
-          {[["planner","📅 Неделя"],["day","📆 День"],["tasks","📋 Задачи"],["logs","📜 Логи"],["calendar","🗓 Календарь"],["strategy","🎯 Стратегия"],["analytics","📊 Аналитика"],["settings","⚙️ Настройки"]].map(([k, l]) => (
-            <button key={k} onClick={() => setTab(k)} style={{ background: tab === k ? "rgba(200,146,42,.15)" : "none", border: `1px solid ${tab === k ? "rgba(200,146,42,.6)" : "transparent"}`, color: tab === k ? C.gold : "#9CA3AF", borderRadius: 7, padding: "5px 14px", cursor: "pointer", fontSize: 13, fontWeight: 500, fontFamily: "inherit" }}>{l}</button>
+          {orderedTabs.map(([k, l], i) => (
+            <button key={k} onClick={() => setTab(k)}
+              draggable
+              onDragStart={() => setDragTabIdx(i)}
+              onDragOver={e => { e.preventDefault(); }}
+              onDrop={() => {
+                if (dragTabIdx === null || dragTabIdx === i) return;
+                const arr = [...tabOrder]; const [m] = arr.splice(dragTabIdx, 1); arr.splice(i, 0, m);
+                setTabOrder(arr); localStorage.setItem("tp_tab_order", JSON.stringify(arr)); setDragTabIdx(null);
+              }}
+              onDragEnd={() => setDragTabIdx(null)}
+              style={{ background: tab === k ? "rgba(200,146,42,.15)" : "none", border: `1px solid ${tab === k ? "rgba(200,146,42,.6)" : "transparent"}`, color: tab === k ? C.gold : "#9CA3AF", borderRadius: 7, padding: "5px 14px", cursor: "grab", fontSize: 13, fontWeight: 500, fontFamily: "inherit", opacity: dragTabIdx === i ? .4 : 1 }}>{l}</button>
           ))}
         </nav>
       </header>
@@ -783,10 +762,13 @@ export default function App() {
             </div>
           );
         })()}
+        {searchOpen && <SearchModal wd={wd} projects={projects} emps={emps} dates={dates} onClose={() => setSearchOpen(false)} onGoto={(tab) => { setTab(tab); setSearchOpen(false); }} />}
         {loading ? (
           <div style={{ textAlign: "center", padding: 80, color: C.muted }}>⏳ Загрузка...</div>
         ) : !wd ? null : tab === "planner" ? (
           <WeekInline wd={wd} emps={emps} wts={wts} dates={dates} onUpdDay={updDay} onEmpsUpdate={saveEmps} onUpdStrat={updStrat} />
+        ) : tab === "projects" ? (
+          <ProjectsView projects={projects} emps={emps} wts={wts} dates={dates} onSave={saveProjects} />
         ) : tab === "day" ? (
           <DayView wd={wd} emps={emps} wts={wts} dates={dates} selectedDay={selectedDay} onSelectDay={setSelectedDay} onUpdDay={updDay} />
         ) : tab === "tasks" ? (
@@ -795,8 +777,6 @@ export default function App() {
           <CalendarView wd={wd} emps={emps} wts={wts} allKeys={allKeys} cw={cw} />
         ) : tab === "strategy" ? (
           <StrategyView wd={wd} emps={emps} onUpdateStrategy={updStrat} />
-        ) : tab === "logs" ? (
-          <LogsView currentUser={currentUser} emps={emps} />
         ) : tab === "analytics" ? (
           <Analytics wd={wd} emps={emps} wts={wts} dates={dates} cw={cw} />
         ) : (
@@ -824,102 +804,6 @@ export default function App() {
           }}
           onDismiss={() => setResumePrompt(null)} />
       )}
-    </>}
-    </div>
-  );
-}
-
-
-/* ═══ LOGIN SCREEN ══════════════════════════════════════════ */
-function LoginScreen({ emps, onSelect }) {
-  return (
-    <div style={{ position: "fixed", inset: 0, background: C.dark, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, flexDirection: "column", gap: 24 }}>
-      <div style={{ textAlign: "center" }}>
-        <div style={{ fontSize: 32, fontWeight: 800, color: C.gold }}>◈ TeamPlanner</div>
-        <div style={{ fontSize: 14, color: "#6B7280", marginTop: 6 }}>Выберите кто вы</div>
-      </div>
-      <div style={{ display: "flex", gap: 16, flexWrap: "wrap", justifyContent: "center" }}>
-        {emps.map(emp => (
-          <button key={emp.id} onClick={() => onSelect(emp)}
-            style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, padding: "24px 32px", background: "rgba(255,255,255,.07)", border: "2px solid rgba(255,255,255,.12)", borderRadius: 16, cursor: "pointer", fontFamily: "inherit", transition: "all .2s", minWidth: 140 }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = emp.color; e.currentTarget.style.transform = "scale(1.05)"; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,.12)"; e.currentTarget.style.transform = "scale(1)"; }}>
-            <span style={{ fontSize: 48 }}>{emp.emoji || "👤"}</span>
-            <div style={{ width: 32, height: 4, borderRadius: 2, background: emp.color }} />
-            <span style={{ fontSize: 16, fontWeight: 700, color: "#E8E0D0" }}>{emp.name}</span>
-          </button>
-        ))}
-      </div>
-      <div style={{ fontSize: 11, color: "#374151" }}>Выбор сохранится в браузере</div>
-    </div>
-  );
-}
-
-/* ═══ LOGS VIEW ═════════════════════════════════════════════ */
-function LogsView({ currentUser, emps }) {
-  const [logs, setLogs] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [filterUser, setFilterUser] = useState("all");
-
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase.from("activity_logs").select("*").order("created_at", { ascending: false }).limit(500);
-      setLogs(data || []); setLoading(false);
-    })();
-    const ch = supabase.channel("logs-rt").on("postgres_changes", { event: "INSERT", schema: "public", table: "activity_logs" }, p => {
-      setLogs(prev => [p.new, ...prev].slice(0, 500));
-    }).subscribe();
-    return () => supabase.removeChannel(ch);
-  }, []);
-
-  const fmtDT = (iso) => {
-    if (!iso) return "—";
-    const d = new Date(iso);
-    return d.toLocaleDateString("ru-RU", { day: "numeric", month: "short" }) + " " + d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-  };
-
-  const actionLabels = { "открыл приложение":"🔑 Вход", "начал день":"▶ Начал день", "завершил день":"⏹ Завершил", "запустил таймер":"⏱ Таймер ▶", "остановил таймер":"⏱ Таймер ⏹" };
-  const uniqueUsers = [...new Set(logs.map(l => l.user_name))];
-  const filtered = logs.filter(l => filterUser === "all" || l.user_name === filterUser);
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div style={{ ...cardS, padding: "12px 18px", display: "flex", alignItems: "center", gap: 12 }}>
-        <div style={{ fontWeight: 700, fontSize: 16, color: C.dark }}>📜 Логи активности</div>
-        <span style={{ fontSize: 12, color: C.muted }}>{filtered.length} записей</span>
-        <select value={filterUser} onChange={e => setFilterUser(e.target.value)} style={{ ...baseInp, width: "auto", fontSize: 12, padding: "4px 8px", marginLeft: "auto" }}>
-          <option value="all">Все пользователи</option>
-          {uniqueUsers.map(u => <option key={u} value={u}>{u}</option>)}
-        </select>
-      </div>
-      <div style={{ background: C.card, borderRadius: 12, overflow: "hidden", border: `1px solid ${C.border}` }}>
-        {loading ? <div style={{ textAlign: "center", padding: 40, color: C.muted }}>⏳ Загрузка...</div> : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead><tr>
-              <th style={{ ...thS, width: 150 }}>Время</th>
-              <th style={{ ...thS, width: 140 }}>Пользователь</th>
-              <th style={{ ...thS, width: 180 }}>Действие</th>
-              <th style={thS}>Детали</th>
-            </tr></thead>
-            <tbody>
-              {filtered.map(log => (
-                <tr key={log.id} onMouseEnter={e => e.currentTarget.style.background="#FEFDFB"} onMouseLeave={e => e.currentTarget.style.background="#fff"}>
-                  <td style={{ ...tdS, fontSize: 11, color: C.muted, fontFamily: "monospace" }}>{fmtDT(log.created_at)}</td>
-                  <td style={tdS}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: log.user_color || C.muted }} />
-                      <span style={{ fontSize: 14 }}>{log.user_emoji || "👤"}</span>
-                      <span style={{ fontSize: 12, fontWeight: 600 }}>{log.user_name}</span>
-                    </div>
-                  </td>
-                  <td style={tdS}><span style={{ fontSize: 12, background: "#F5F4F1", borderRadius: 6, padding: "2px 8px" }}>{actionLabels[log.action] || log.action}</span></td>
-                  <td style={{ ...tdS, fontSize: 11, color: C.muted }}>{log.details && Object.keys(log.details).length > 0 ? Object.entries(log.details).map(([k,v])=>`${k}: ${v}`).join(" · ") : "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
     </div>
   );
 }
@@ -1659,7 +1543,25 @@ function InlineTask({ task, wts, onChange, onDelete, onAddBelow, isNew, isDragOv
         </div>
       </div>
 
-      {/* Строка 3: результат — полная ширина */}
+      {/* Строка 3: дедлайн · тип работы + результат */}
+      <div style={{ display: "flex", alignItems: "center", gap: 4, marginLeft: 20, marginTop: 2 }}>
+        {/* Дедлайн */}
+        <input type="date" value={task.deadline || ""} onChange={e => upd("deadline", e.target.value || null)}
+          title="Дедлайн задачи"
+          style={{ width: 32, fontSize: 9, border: `1px solid ${task.deadline && new Date(task.deadline) < new Date() ? "rgba(220,38,38,.5)" : C.border}`, borderRadius: 4, padding: "2px 2px", background: task.deadline ? (new Date(task.deadline) < new Date() ? "rgba(220,38,38,.08)" : "rgba(5,150,105,.06)") : "transparent", fontFamily: "inherit", color: "transparent", outline: "none", cursor: "pointer", flexShrink: 0 }}
+          onFocus={e => { e.target.style.width = "100px"; e.target.style.color = C.text; }}
+          onBlur={e => { e.target.style.width = "32px"; e.target.style.color = "transparent"; }} />
+        {task.deadline && (
+          <span style={{ fontSize: 9, color: new Date(task.deadline) < new Date() ? C.danger : C.success, fontWeight: 600, flexShrink: 0 }}>
+            📅 {new Date(task.deadline).toLocaleDateString("ru-RU", { day: "numeric", month: "short" })}
+          </span>
+        )}
+        {/* Комментарии */}
+        <CommentBadge task={task} onChange={onChange} />
+        <WorkTypePill value={task.workType} wts={wts} onChange={v => upd("workType", v)} />
+      </div>
+
+      {/* Строка 4: результат */}
       <div style={{ marginLeft: 20, marginTop: 2 }}>
         <input value={task.result || ""} onChange={e => upd("result", e.target.value)}
           style={{ width: "100%", fontSize: 10, border: "1px solid transparent", borderRadius: 4, padding: "2px 4px", background: "transparent", fontFamily: "inherit", color: C.muted, outline: "none", boxSizing: "border-box", transition: "all .15s" }}
@@ -2321,6 +2223,353 @@ function TasksView({ wd, emps, wts }) {
   );
 }
 
+/* ═══ COMMENT BADGE ═════════════════════════════════════════ */
+function CommentBadge({ task, onChange }) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState("");
+  const ref = useRef(null);
+  const count = task.comments?.length || 0;
+
+  useEffect(() => {
+    const h = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", h); return () => document.removeEventListener("mousedown", h);
+  }, []);
+
+  const addComment = () => {
+    if (!text.trim()) return;
+    const c = { id: mkId(), text: text.trim(), author: "Я", createdAt: new Date().toISOString() };
+    onChange({ ...task, comments: [...(task.comments || []), c] });
+    setText("");
+  };
+
+  return (
+    <div ref={ref} style={{ position: "relative", flexShrink: 0 }}>
+      <button onClick={() => setOpen(p=>!p)} title="Комментарии"
+        style={{ display: "flex", alignItems: "center", gap: 2, fontSize: 9, background: count > 0 ? "rgba(59,130,246,.1)" : "transparent", border: `1px solid ${count > 0 ? "rgba(59,130,246,.3)" : C.border}`, borderRadius: 8, padding: "2px 5px", cursor: "pointer", color: count > 0 ? "#1D4ED8" : C.muted }}>
+        💬{count > 0 && <span style={{ fontWeight: 700 }}>{count}</span>}
+      </button>
+      {open && (
+        <div style={{ position: "fixed", zIndex: 9999, background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: 12, width: 260, boxShadow: "0 8px 24px rgba(0,0,0,.15)" }}
+          ref={el => { if (el && ref.current) { const r = ref.current.getBoundingClientRect(); el.style.top = (r.bottom+4)+"px"; el.style.left = Math.min(r.left, window.innerWidth-270)+"px"; } }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: C.dark, marginBottom: 8 }}>💬 Комментарии</div>
+          <div style={{ maxHeight: 160, overflowY: "auto", marginBottom: 8 }}>
+            {(task.comments||[]).length === 0 && <div style={{ fontSize: 11, color: C.muted, textAlign: "center", padding: "8px 0" }}>Комментариев нет</div>}
+            {(task.comments||[]).map(c => (
+              <div key={c.id} style={{ marginBottom: 8, padding: "6px 8px", background: "#F9F8F6", borderRadius: 7 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: C.muted, marginBottom: 3 }}>
+                  <span style={{ fontWeight: 600 }}>{c.author}</span>
+                  <span>{new Date(c.createdAt).toLocaleDateString("ru-RU", { day: "numeric", month: "short" })}</span>
+                </div>
+                <div style={{ fontSize: 12, color: C.text }}>{c.text}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: "flex", gap: 6 }}>
+            <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key==="Enter" && addComment()}
+              placeholder="Написать комментарий..."
+              style={{ ...baseInp, fontSize: 11, flex: 1, padding: "4px 8px" }} autoFocus />
+            <button onClick={addComment} style={{ ...btnS("primary"), padding: "4px 10px", fontSize: 11 }}>↵</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ═══ NOTIF BELL ════════════════════════════════════════════ */
+function NotifBell({ wd, emps, projects, open, onToggle, onClose }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const h = e => { if (ref.current && !ref.current.contains(e.target)) onClose(); };
+    document.addEventListener("mousedown", h); return () => document.removeEventListener("mousedown", h);
+  }, []);
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const tomorrow = new Date(today); tomorrow.setDate(today.getDate()+1);
+  const notifs = [];
+
+  // Из недельных задач
+  wd?.employees.forEach(ed => {
+    const emp = emps.find(e => e.id === ed.employeeId);
+    ed.days.forEach((day, di) => {
+      day.tasks.forEach(t => {
+        if (!t.deadline || t.status === "done") return;
+        const dl = new Date(t.deadline); dl.setHours(0,0,0,0);
+        if (dl < today) notifs.push({ type: "overdue", task: t.task, emp, deadline: t.deadline });
+        else if (dl.getTime() === today.getTime()) notifs.push({ type: "today", task: t.task, emp, deadline: t.deadline });
+        else if (dl.getTime() === tomorrow.getTime()) notifs.push({ type: "tomorrow", task: t.task, emp, deadline: t.deadline });
+      });
+    });
+  });
+
+  // Из проектов
+  projects.forEach(pr => {
+    pr.tasks?.forEach(t => {
+      if (!t.deadline || t.status === "done") return;
+      const dl = new Date(t.deadline); dl.setHours(0,0,0,0);
+      if (dl < today) notifs.push({ type: "overdue", task: t.task, project: pr.name, deadline: t.deadline });
+      else if (dl.getTime() === today.getTime()) notifs.push({ type: "today", task: t.task, project: pr.name, deadline: t.deadline });
+    });
+  });
+
+  const urgentCount = notifs.filter(n => n.type === "overdue" || n.type === "today").length;
+  const typeColor = { overdue: C.danger, today: "#D97706", tomorrow: C.success };
+  const typeLabel = { overdue: "🔴 Просрочено", today: "🟡 Сегодня", tomorrow: "🟢 Завтра" };
+
+  return (
+    <div ref={ref} style={{ position: "relative", flexShrink: 0 }}>
+      <button onClick={onToggle}
+        style={{ position: "relative", background: open ? "rgba(200,146,42,.15)" : "rgba(255,255,255,.07)", border: `1px solid ${open ? "rgba(200,146,42,.4)" : "transparent"}`, color: urgentCount > 0 ? C.gold : "#9CA3AF", borderRadius: 8, padding: "5px 10px", cursor: "pointer", fontSize: 16 }}
+        title="Уведомления">
+        🔔
+        {urgentCount > 0 && <span style={{ position: "absolute", top: 2, right: 2, width: 14, height: 14, borderRadius: "50%", background: C.danger, color: "#fff", fontSize: 8, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{urgentCount}</span>}
+      </button>
+      {open && (
+        <div style={{ position: "absolute", top: "110%", right: 0, background: C.dark, border: "1px solid rgba(255,255,255,.15)", borderRadius: 14, width: 300, maxHeight: 400, overflowY: "auto", zIndex: 300, boxShadow: "0 12px 40px rgba(0,0,0,.5)" }}>
+          <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,.08)", fontWeight: 700, fontSize: 13, color: "#E8E0D0" }}>
+            🔔 Уведомления {notifs.length > 0 && <span style={{ fontSize: 11, color: C.muted, fontWeight: 400 }}>· {notifs.length}</span>}
+          </div>
+          {notifs.length === 0 && <div style={{ padding: "24px 16px", textAlign: "center", color: "#6B7280", fontSize: 13 }}>Всё в порядке 🎉</div>}
+          {notifs.map((n, i) => (
+            <div key={i} style={{ padding: "10px 16px", borderBottom: "1px solid rgba(255,255,255,.06)", display: "flex", gap: 10, alignItems: "flex-start" }}>
+              <div>
+                <div style={{ fontSize: 10, color: typeColor[n.type], fontWeight: 700, marginBottom: 2 }}>{typeLabel[n.type]}</div>
+                <div style={{ fontSize: 12, color: "#D0C8B8" }}>{n.task || "—"}</div>
+                <div style={{ fontSize: 10, color: "#6B7280", marginTop: 2 }}>
+                  {n.emp ? `${n.emp.emoji} ${n.emp.name}` : `📁 ${n.project}`} · {new Date(n.deadline).toLocaleDateString("ru-RU", { day: "numeric", month: "short" })}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ═══ SEARCH MODAL ══════════════════════════════════════════ */
+function SearchModal({ wd, projects, emps, dates, onClose, onGoto }) {
+  const [q, setQ] = useState("");
+  const ref = useRef(null);
+
+  useEffect(() => { ref.current?.focus(); }, []);
+
+  const results = [];
+  if (q.trim().length > 1) {
+    const lq = q.toLowerCase();
+    // Search weekly tasks
+    wd?.employees.forEach(ed => {
+      const emp = emps.find(e => e.id === ed.employeeId);
+      ed.days.forEach((day, di) => {
+        day.tasks.forEach(t => {
+          if ((t.task||"").toLowerCase().includes(lq) || (t.result||"").toLowerCase().includes(lq)) {
+            results.push({ type: "week", t, emp, day: dates[di], label: `${emp?.emoji} ${emp?.name} · ${dates[di]?.toLocaleDateString("ru-RU", { weekday: "short", day: "numeric", month: "short" })}` });
+          }
+        });
+      });
+    });
+    // Search projects
+    projects.forEach(pr => {
+      pr.tasks?.forEach(t => {
+        if ((t.task||"").toLowerCase().includes(lq) || (t.result||"").toLowerCase().includes(lq)) {
+          results.push({ type: "project", t, project: pr, label: `📁 ${pr.name}` });
+        }
+      });
+    });
+  }
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 4000, display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: "10vh" }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div style={{ background: C.dark, borderRadius: 16, width: "min(560px, 94vw)", overflow: "hidden", boxShadow: "0 24px 64px rgba(0,0,0,.6)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,.1)" }}>
+          <span style={{ fontSize: 18, color: "#6B7280" }}>🔍</span>
+          <input ref={ref} value={q} onChange={e => setQ(e.target.value)}
+            onKeyDown={e => e.key === "Escape" && onClose()}
+            placeholder="Поиск по задачам, проектам..."
+            style={{ flex: 1, background: "transparent", border: "none", outline: "none", fontSize: 16, color: "#E8E0D0", fontFamily: "inherit" }} />
+          <span style={{ fontSize: 11, color: "#4B5563", cursor: "pointer" }} onClick={onClose}>ESC</span>
+        </div>
+        <div style={{ maxHeight: 400, overflowY: "auto" }}>
+          {q.length > 1 && results.length === 0 && <div style={{ padding: "24px", textAlign: "center", color: "#6B7280" }}>Ничего не найдено</div>}
+          {results.slice(0, 20).map((r, i) => (
+            <div key={i} onClick={() => { onGoto(r.type === "project" ? "projects" : "planner"); }}
+              style={{ padding: "10px 16px", borderBottom: "1px solid rgba(255,255,255,.05)", cursor: "pointer", display: "flex", gap: 12, alignItems: "flex-start" }}
+              onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,.05)"}
+              onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, color: "#E8E0D0", fontWeight: 500 }}>{r.t.task || "—"}</div>
+                {r.t.result && <div style={{ fontSize: 11, color: "#6B7280", marginTop: 2 }}>→ {r.t.result}</div>}
+                <div style={{ fontSize: 10, color: "#4B5563", marginTop: 3 }}>{r.label}</div>
+              </div>
+              {r.t.deadline && <span style={{ fontSize: 10, color: new Date(r.t.deadline) < new Date() ? C.danger : C.muted, flexShrink: 0 }}>📅 {new Date(r.t.deadline).toLocaleDateString("ru-RU", { day: "numeric", month: "short" })}</span>}
+              {r.t.status === "done" && <span style={{ fontSize: 10, color: C.success, flexShrink: 0 }}>✓</span>}
+            </div>
+          ))}
+          {results.length > 20 && <div style={{ padding: "8px 16px", fontSize: 11, color: "#6B7280", textAlign: "center" }}>Показано 20 из {results.length}</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══ PROJECTS VIEW ═════════════════════════════════════════ */
+const PROJECT_COLORS = ["#C5B8E8","#F4B8D1","#A8D8EA","#B8E0C8","#FFD9A8","#F9C8C8","#B8E8D8","#FFE0A8"];
+const PROJECT_EMOJIS = ["📁","🚀","💡","🎯","⭐","🔥","💼","🎨","📊","🌟","🏆","🔧"];
+
+function ProjectsView({ projects, emps, wts, onSave }) {
+  const [selProject, setSelProject] = useState(null);
+  const [editName, setEditName] = useState(false);
+
+  const addProject = () => {
+    const p = emptyProject();
+    onSave([...projects, p]);
+    setSelProject(p.id);
+  };
+
+  const updProject = (id, changes) => {
+    const updated = projects.map(p => p.id === id ? { ...p, ...changes } : p);
+    onSave(updated);
+  };
+
+  const delProject = (id) => {
+    if (!window.confirm("Удалить проект?")) return;
+    onSave(projects.filter(p => p.id !== id));
+    if (selProject === id) setSelProject(null);
+  };
+
+  const proj = projects.find(p => p.id === selProject);
+
+  const addTask = () => {
+    if (!proj) return;
+    const t = emptyTask();
+    updProject(proj.id, { tasks: [...(proj.tasks||[]), t] });
+  };
+
+  const updTask = (tid, changes) => {
+    if (!proj) return;
+    updProject(proj.id, { tasks: (proj.tasks||[]).map(t => t.id === tid ? { ...t, ...changes } : t) });
+  };
+
+  const delTask = (tid) => {
+    if (!proj) return;
+    updProject(proj.id, { tasks: (proj.tasks||[]).filter(t => t.id !== tid) });
+  };
+
+  const doneCnt = proj ? (proj.tasks||[]).filter(t => t.status === "done").length : 0;
+  const totalCnt = proj ? (proj.tasks||[]).length : 0;
+  const pct = totalCnt > 0 ? Math.round(doneCnt/totalCnt*100) : 0;
+
+  return (
+    <div style={{ display: "flex", gap: 16, height: "calc(100vh - 120px)" }}>
+      {/* Sidebar */}
+      <div style={{ width: 240, flexShrink: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+        <button onClick={addProject} style={{ ...btnS("primary"), width: "100%", fontSize: 13 }}>+ Новый проект</button>
+        <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 }}>
+          {projects.length === 0 && <div style={{ ...cardS, textAlign: "center", padding: 24, color: C.muted, fontSize: 13 }}>Нет проектов</div>}
+          {projects.map(p => {
+            const done = (p.tasks||[]).filter(t => t.status==="done").length;
+            const total = (p.tasks||[]).length;
+            const pct = total > 0 ? Math.round(done/total*100) : 0;
+            const sel = selProject === p.id;
+            return (
+              <div key={p.id} onClick={() => setSelProject(p.id)}
+                style={{ background: sel ? C.goldLight : C.card, border: `1px solid ${sel ? C.gold : C.border}`, borderLeft: `4px solid ${p.color}`, borderRadius: 10, padding: "10px 12px", cursor: "pointer", transition: "all .15s" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                  <span style={{ fontSize: 16 }}>{p.emoji}</span>
+                  <span style={{ fontWeight: 600, fontSize: 13, color: C.dark, flex: 1 }}>{p.name || "Без названия"}</span>
+                </div>
+                <div style={{ fontSize: 10, color: C.muted, marginBottom: 4 }}>{done}/{total} задач</div>
+                <div style={{ height: 3, background: C.border, borderRadius: 2, overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${pct}%`, background: pct===100 ? C.success : p.color, borderRadius: 2 }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Project detail */}
+      {!proj && (
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12, color: C.muted }}>
+          <div style={{ fontSize: 48 }}>🗂</div>
+          <div style={{ fontSize: 14 }}>Выберите проект или создайте новый</div>
+        </div>
+      )}
+      {proj && (
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 10, minWidth: 0 }}>
+          {/* Project header */}
+          <div style={{ ...cardS, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            {/* Emoji picker */}
+            <select value={proj.emoji} onChange={e => updProject(proj.id, { emoji: e.target.value })}
+              style={{ fontSize: 22, border: "none", background: "transparent", cursor: "pointer", outline: "none" }}>
+              {PROJECT_EMOJIS.map(e => <option key={e} value={e}>{e}</option>)}
+            </select>
+            {/* Name */}
+            <input value={proj.name} onChange={e => updProject(proj.id, { name: e.target.value })}
+              style={{ ...baseInp, fontWeight: 700, fontSize: 18, border: "none", background: "transparent", flex: 1, padding: "2px 4px" }}
+              placeholder="Название проекта" />
+            {/* Color */}
+            <div style={{ display: "flex", gap: 4 }}>
+              {PROJECT_COLORS.map(c => (
+                <button key={c} onClick={() => updProject(proj.id, { color: c })}
+                  style={{ width: 18, height: 18, borderRadius: "50%", background: c, border: `2px solid ${proj.color === c ? C.dark : "transparent"}`, cursor: "pointer", padding: 0 }} />
+              ))}
+            </div>
+            <div style={{ fontSize: 12, color: C.muted }}>{doneCnt}/{totalCnt} · {pct}%</div>
+            <div style={{ width: 80, height: 5, background: C.border, borderRadius: 3, overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${pct}%`, background: pct===100 ? C.success : proj.color, borderRadius: 3 }} />
+            </div>
+            <button onClick={() => delProject(proj.id)} style={{ ...btnS("danger"), fontSize: 11, padding: "4px 10px" }}>🗑</button>
+          </div>
+          {/* Description */}
+          <textarea value={proj.description||""} onChange={e => updProject(proj.id, { description: e.target.value })}
+            placeholder="Описание проекта..."
+            style={{ ...baseInp, height: 48, resize: "none", fontSize: 13, lineHeight: 1.5 }} />
+          {/* Tasks */}
+          <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 0, background: C.card, borderRadius: 12, border: `1px solid ${C.border}` }}>
+            <div style={{ padding: "10px 16px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontWeight: 700, fontSize: 14, color: C.dark }}>Задачи проекта</span>
+              <button onClick={addTask} style={{ ...btnS("ghost"), fontSize: 11, padding: "3px 10px", marginLeft: "auto" }}>+ Добавить</button>
+            </div>
+            {(proj.tasks||[]).length === 0 && <div style={{ padding: "32px", textAlign: "center", color: C.muted }}>Нет задач — нажмите «+ Добавить»</div>}
+            {(proj.tasks||[]).map((t, i) => {
+              const status = t.status || "";
+              const cycleS = s => s === "" ? "progress" : s === "progress" ? "done" : "";
+              const statusIcon = { "": "○", "progress": "◑", "done": "✓" };
+              const statusColor = { "": C.muted, "progress": "#D97706", "done": C.success };
+              return (
+                <div key={t.id} style={{ padding: "10px 16px", borderBottom: `1px solid #F5F4F1`, display: "flex", alignItems: "flex-start", gap: 10, background: status==="done" ? "#FAFAF8" : "#fff" }}>
+                  <button onClick={() => updTask(t.id, { status: cycleS(status), done: cycleS(status)==="done" })}
+                    style={{ width: 20, height: 20, borderRadius: "50%", border: `2px solid ${statusColor[status]}`, background: status==="done" ? "rgba(5,150,105,.1)" : "transparent", color: statusColor[status], fontSize: 10, cursor: "pointer", padding: 0, flexShrink: 0, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit" }}>
+                    {statusIcon[status]}
+                  </button>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <input value={t.task} onChange={e => updTask(t.id, { task: e.target.value })}
+                      onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addTask(); } }}
+                      autoFocus={i === (proj.tasks||[]).length-1 && !t.task}
+                      style={{ ...baseInp, border: "none", background: "transparent", fontSize: 14, textDecoration: status==="done"?"line-through":"none", color: status==="done"?C.muted:C.text, padding: "0", fontWeight: 500 }}
+                      placeholder="Задача проекта..." />
+                    <div style={{ display: "flex", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
+                      <input value={t.result||""} onChange={e => updTask(t.id, { result: e.target.value })}
+                        style={{ ...baseInp, border: "none", background: "transparent", fontSize: 11, color: C.muted, padding: 0, flex: 1, minWidth: 100 }}
+                        placeholder="Ожидаемый результат..." />
+                      <input type="date" value={t.deadline||""} onChange={e => updTask(t.id, { deadline: e.target.value||null })}
+                        style={{ fontSize: 11, border: `1px solid ${t.deadline && new Date(t.deadline)<new Date() ? "rgba(220,38,38,.4)" : C.border}`, borderRadius: 6, padding: "2px 6px", color: t.deadline ? (new Date(t.deadline)<new Date() ? C.danger : C.success) : C.muted, background: "transparent", fontFamily: "inherit", cursor: "pointer" }} />
+                    </div>
+                  </div>
+                  <button onClick={() => delTask(t.id)} style={{ background: "none", border: "none", color: "#D8D4CE", cursor: "pointer", fontSize: 16, flexShrink: 0 }}
+                    onMouseEnter={e => e.currentTarget.style.color=C.danger} onMouseLeave={e => e.currentTarget.style.color="#D8D4CE"}>×</button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ═══ STRATEGY ══════════════════════════════════════════════ */
 function StrategyView({ wd, emps, onUpdateStrategy }) {
   return (
@@ -2332,7 +2581,12 @@ function StrategyView({ wd, emps, onUpdateStrategy }) {
       {emps.map(emp => {
         const ed = wd.employees.find(e => e.employeeId === emp.id);
         const strat = ed?.strategy || [];
-        const addG = () => onUpdateStrategy(emp.id, [...strat, { id: mkId(), task: "", result: "", hours: "", priority: "", type: "С" }]);
+        const addG = (type = "С") => {
+          const newItem = { id: mkId(), task: "", result: "", hours: "", priority: "", type };
+          onUpdateStrategy(emp.id, [...strat, newItem]);
+          // Focus will happen via autoFocus on new row
+          return newItem.id;
+        };
         const updG = (id, f, v) => onUpdateStrategy(emp.id, strat.map(g => g.id === id ? { ...g, [f]: v } : g));
         const rmG = (id) => onUpdateStrategy(emp.id, strat.filter(g => g.id !== id));
         const totalH = strat.reduce((s, g) => s + (parseFloat(g.hours) || 0), 0);
@@ -2360,8 +2614,9 @@ function StrategyView({ wd, emps, onUpdateStrategy }) {
                   <th style={{ ...thS, width: 28 }}></th>
                 </tr></thead>
                 <tbody>
-                  {strat.map(g => {
+                  {strat.map((g, gi) => {
                     const isStrat = g.type !== "Т";
+                    const isLast = gi === strat.length - 1;
                     const rowBg = isStrat ? "rgba(200,146,42,.03)" : "rgba(59,130,246,.03)";
                     const borderL = isStrat ? `3px solid ${C.gold}` : "3px solid #3B82F6";
                     return (
@@ -2373,9 +2628,19 @@ function StrategyView({ wd, emps, onUpdateStrategy }) {
                           </button>
                         </td>
                         <td style={tdS}><input value={g.priority} onChange={e => updG(g.id, "priority", e.target.value)} style={{ ...baseInp, width: 30, textAlign: "center", padding: 4, fontWeight: 700, color: C.gold }} maxLength={2} /></td>
-                        <td style={tdS}><input value={g.task} onChange={e => updG(g.id, "task", e.target.value)} style={{ ...baseInp, fontWeight: isStrat ? 600 : 400 }} placeholder={isStrat ? "Стратегическая цель" : "Тактическая задача"} /></td>
-                        <td style={tdS}><input value={g.result} onChange={e => updG(g.id, "result", e.target.value)} style={baseInp} placeholder="Ожидаемый результат" /></td>
-                        <td style={tdS}><input value={g.hours} onChange={e => updG(g.id, "hours", e.target.value)} style={{ ...baseInp, textAlign: "center" }} type="number" step="0.5" placeholder="8" /></td>
+                        <td style={tdS}><input
+                          value={g.task}
+                          onChange={e => updG(g.id, "task", e.target.value)}
+                          autoFocus={isLast && !g.task}
+                          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addG(g.type); } }}
+                          style={{ ...baseInp, fontWeight: isStrat ? 600 : 400 }}
+                          placeholder={isStrat ? "Стратегическая цель" : "Тактическая задача"} /></td>
+                        <td style={tdS}><input value={g.result} onChange={e => updG(g.id, "result", e.target.value)}
+                          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addG(g.type); } }}
+                          style={baseInp} placeholder="Ожидаемый результат" /></td>
+                        <td style={tdS}><input value={g.hours} onChange={e => updG(g.id, "hours", e.target.value)}
+                          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addG(g.type); } }}
+                          style={{ ...baseInp, textAlign: "center" }} type="number" step="0.5" placeholder="8" /></td>
                         <td style={tdS}><button onClick={() => rmG(g.id)} style={{ background: "none", border: "none", color: "#E5A0A0", cursor: "pointer", fontSize: 14 }}>✕</button></td>
                       </tr>
                     );
@@ -3095,6 +3360,80 @@ function SettingsView({ emps, wts, onEmps, onWts }) {
         </div>
         <div style={{ marginTop: 16, padding: 12, background: "#F5E8CE", borderRadius: 9, fontSize: 12, color: "#7D5A20", lineHeight: 1.6 }}>
           💡 Типы выбираются для каждой задачи в Неделе. Аналитика покажет распределение времени по типам.
+        </div>
+      </div>
+
+      <div style={{ ...cardS, gridColumn: "1 / -1" }}>
+        <div style={{ fontWeight: 700, fontSize: 15, color: C.dark, marginBottom: 14 }}>🌍 Часовые пояса и рабочее время</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(380px, 1fr))", gap: 12 }}>
+          {es.map(e => (
+            <div key={e.id} style={{ background: "#F9F8F6", borderRadius: 10, padding: "12px 16px", borderLeft: `4px solid ${e.color}` }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                <span style={{ fontSize: 20 }}>{e.emoji}</span>
+                <span style={{ fontWeight: 700, fontSize: 14, color: C.dark }}>{e.name}</span>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: C.muted, display: "block", marginBottom: 4 }}>МОЙ ЧАСОВОЙ ПОЯС</label>
+                  <select value={e.myTz || "Europe/Kiev"} onChange={ev => saveE(es.map(x => x.id === e.id ? { ...x, myTz: ev.target.value } : x))}
+                    style={{ ...baseInp, fontSize: 12, padding: "5px 8px" }}>
+                    {TIMEZONES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: C.muted, display: "block", marginBottom: 4 }}>СЛЕЖУ ЗА ЗОНОЙ</label>
+                  <select value={e.watchTz || "Europe/Kiev"} onChange={ev => saveE(es.map(x => x.id === e.id ? { ...x, watchTz: ev.target.value } : x))}
+                    style={{ ...baseInp, fontSize: 12, padding: "5px 8px" }}>
+                    {TIMEZONES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: C.muted, display: "block", marginBottom: 4 }}>НАЧАЛО РАБОЧЕГО ДНЯ</label>
+                  <input type="time" value={e.workStart || "09:00"} onChange={ev => saveE(es.map(x => x.id === e.id ? { ...x, workStart: ev.target.value } : x))}
+                    style={{ ...baseInp, fontSize: 12, padding: "5px 8px" }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: C.muted, display: "block", marginBottom: 4 }}>КОНЕЦ РАБОЧЕГО ДНЯ</label>
+                  <input type="time" value={e.workEnd || "18:00"} onChange={ev => saveE(es.map(x => x.id === e.id ? { ...x, workEnd: ev.target.value } : x))}
+                    style={{ ...baseInp, fontSize: 12, padding: "5px 8px" }} />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ ...cardS, gridColumn: "1 / -1" }}>
+        <div style={{ fontWeight: 700, fontSize: 15, color: C.dark, marginBottom: 10 }}>💾 Резервная копия данных</div>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <button onClick={async () => {
+            const backup = {};
+            const keys = await store.list("") || [];
+            for (const k of keys) { backup[k] = await store.get(k); }
+            backup["cfg:emps"] = es; backup["cfg:wts"] = ws;
+            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a"); a.href = url;
+            a.download = `teamplanner-backup-${new Date().toISOString().slice(0,10)}.json`;
+            a.click(); URL.revokeObjectURL(url);
+          }} style={{ ...btnS("primary"), display: "flex", alignItems: "center", gap: 6 }}>
+            📥 Скачать резервную копию
+          </button>
+          <label style={{ ...btnS("ghost"), display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+            📤 Восстановить из файла
+            <input type="file" accept=".json" style={{ display: "none" }} onChange={async e => {
+              const file = e.target.files[0]; if (!file) return;
+              try {
+                const text = await file.text();
+                const data = JSON.parse(text);
+                if (window.confirm(`Восстановить ${Object.keys(data).length} записей? Текущие данные будут перезаписаны.`)) {
+                  for (const [k, v] of Object.entries(data)) { await store.set(k, v); }
+                  window.location.reload();
+                }
+              } catch { alert("Ошибка чтения файла"); }
+            }} />
+          </label>
+          <span style={{ fontSize: 12, color: C.muted }}>Рекомендуем делать резервную копию еженедельно</span>
         </div>
       </div>
 
