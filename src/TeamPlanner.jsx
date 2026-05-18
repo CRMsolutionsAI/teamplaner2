@@ -1265,7 +1265,7 @@ function DayCell({ dayData, wts, empColor, onUpdate, date, onStartDay, onOpenEnd
   const renumber = (arr) => arr.map((t, i) => ({ ...t, priority: String(i + 1) }));
   const totalFact = tasks.reduce((s, t) => {
     const tracked = (t.sessions||[]).reduce((a,p) => a + Math.round((new Date(p.end)-new Date(p.start))/60000), 0);
-    return s + (tracked > 0 ? tracked : (parseMinutes(t.timeRange) ?? parseInt(t.fact) || 0));
+    return s + (tracked > 0 ? tracked : (parseMinutes(t.timeRange) ?? (parseInt(t.fact) || 0)));
   }, 0);
   const doneCnt = tasks.filter(t => t.status === "done" || t.done).length;
 
@@ -1793,7 +1793,7 @@ function DayViewEmployee({ emp, dayData, wts, onUpdate, empId, dayIdx }) {
   };
 
   const doneCnt = tasks.filter(t => t.done).length;
-  const totalFact = tasks.reduce((s, t) => { const m = parseMinutes(t.timeRange); return s + (m ?? parseInt(t.fact) || 0); }, 0);
+  const totalFact = tasks.reduce((s, t) => { const m = parseMinutes(t.timeRange); return s + (m ?? (parseInt(t.fact) || 0)); }, 0);
   const totalPlan = tasks.reduce((s, t) => s + (parseInt(t.plan) || 0), 0);
 
   return (
@@ -2762,7 +2762,7 @@ function Analytics({ wd, emps, wts, dates, cw }) {
       day.tasks.forEach(t => {
         total++; if (t.done) done++;
         totalPlan += parseInt(t.plan) || 0;
-        const m = parseMinutes(t.timeRange) ?? parseInt(t.fact) || 0;
+        const m = parseMinutes(t.timeRange) ?? (parseInt(t.fact) || 0);
         totalFact += m; dayFact[di] += m;
         if (t.workType && m > 0) wtBreak[t.workType] = (wtBreak[t.workType] || 0) + m;
       });
