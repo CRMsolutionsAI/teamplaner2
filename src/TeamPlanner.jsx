@@ -67,6 +67,7 @@ function emptyProject() { return { id: mkId(), name: "", color: "#C5B8E8", emoji
 
 // Module-level drag payload for strategy → day drops
 let _stratDrag = null;
+let _taskDrag = null; // { task, empId, dayIdx } — для перетаскивания между днями
 function emptyEmpWeek(empId) { return { employeeId: empId, strategy: [], days: Array.from({ length: 6 }, (_, i) => ({ dayIndex: i, schedule: "", dayResult: "", tasks: [], startTime: null, endTime: null, pauseStart: null, pauses: [], rating: null, insights: "", problems: "" })) }; }
 function emptyWeek(year, week, emps) { return { id: `${year}-W${week}`, year, week, employees: emps.map(e => emptyEmpWeek(e.id)) }; }
 
@@ -446,6 +447,12 @@ export default function App() {
   const [projects, setProjects] = useState([]);
   const [searchOpen, setSearchOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const DEFAULT_TABS = [["planner","📅 Неделя"],["day","📆 День"],["projects","🗂 Проекты"],["tasks","📋 Задачи"],["calendar","🗓 Календарь"],["strategy","🎯 Стратегия"],["analytics","📊 Аналитика"],["settings","⚙️ Настройки"]];
+  const [tabOrder, setTabOrder] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("tp_tab_order") || "null") || DEFAULT_TABS.map(t=>t[0]); } catch { return DEFAULT_TABS.map(t=>t[0]); }
+  });
+  const [dragTabIdx, setDragTabIdx] = useState(null);
+  const orderedTabs = tabOrder.map(k => DEFAULT_TABS.find(t => t[0] === k)).filter(Boolean);
   const saveTimer = useRef(null);
   const wkey = `week:${cw.year}-${cw.week}`;
 
@@ -566,8 +573,37 @@ export default function App() {
 
     const onVisible = () => {
       if (document.visibilityState === "hidden") {
-        // Небольшая задержка — даём время другой вкладке написать heartbeat
-        setTimeout(() => { if (!isActiveElsewhere()) autoPause(); }, 2000);
+        // Выключили компьютер / закрыли крышку → останавливаем все активные таймеры задач
+        setTimeout(() => {
+          if (!isActiveElsewhere()) {
+            autoPause();
+            // Останавливаем таймеры задач — закрываем незавершённые сессии
+            setWd(prev => {
+              if (!prev) return prev;
+              let changed = false;
+              const now = new Date().toISOString();
+              const updated = {
+                ...prev,
+                employees: prev.employees.map(ed => ({
+                  ...ed,
+                  days: ed.days.map(day => {
+                    const tasks = day.tasks.map(t => {
+                      if (!t.timerStart) return t;
+                      changed = true;
+                      const session = { start: t.timerStart, end: now };
+                      const sessions = [...(t.sessions || []), session];
+                      const newTotal = Math.round(sessions.reduce((s,p) => s + (new Date(p.end) - new Date(p.start)), 0) / 60000);
+                      return { ...t, timerStart: null, sessions, fact: String(newTotal) };
+                    });
+                    return { ...day, tasks };
+                  })
+                }))
+              };
+              if (changed) { saveWd(updated); return updated; }
+              return prev;
+            });
+          }
+        }, 2000);
       } else {
         const today = new Date(); today.setHours(0,0,0,0);
         const todayIdx = (today.getDay() + 6) % 7;
@@ -609,13 +645,6 @@ export default function App() {
   };
 
   const dates = getWeekDates(cw.year, cw.week);
-
-  const DEFAULT_TABS = [["planner","📅 Неделя"],["day","📆 День"],["projects","🗂 Проекты"],["tasks","📋 Задачи"],["calendar","🗓 Календарь"],["strategy","🎯 Стратегия"],["analytics","📊 Аналитика"],["settings","⚙️ Настройки"]];
-  const [tabOrder, setTabOrder] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("tp_tab_order") || "null") || DEFAULT_TABS.map(t=>t[0]); } catch { return DEFAULT_TABS.map(t=>t[0]); }
-  });
-  const [dragTabIdx, setDragTabIdx] = useState(null);
-  const orderedTabs = tabOrder.map(k => DEFAULT_TABS.find(t => t[0] === k)).filter(Boolean);
 
   return (
     <div style={{ fontFamily: "'Golos Text','Segoe UI',sans-serif", minHeight: "100vh", background: C.bg, display: "flex", flexDirection: "column" }}>
@@ -938,6 +967,13 @@ function WeekInline({ wd, emps, wts, dates, onUpdDay, onEmpsUpdate, onUpdStrat }
                 const dayData = ed?.days[di] || { dayIndex: di, schedule: "", dayResult: "", tasks: [], startTime: null, endTime: null };
                 return (
                   <DayCell key={di} dayData={dayData} wts={wts} empColor={emp.color} date={dates[di]}
+                    empId={emp.id} dayIdx={di}
+                    onTaskDragOut={(srcEmpId, srcDayIdx, taskId) => {
+                      const srcEd = wd?.employees.find(e => e.employeeId === srcEmpId);
+                      const srcDay = srcEd?.days[srcDayIdx];
+                      if (!srcDay) return;
+                      onUpdDay(srcEmpId, srcDayIdx, { ...srcDay, tasks: srcDay.tasks.filter(t => t.id !== taskId) });
+                    }}
                     onUpdate={(dd) => onUpdDay(emp.id, di, dd)}
                     onStartDay={() => onUpdDay(emp.id, di, { ...dayData, startTime: new Date().toISOString() })}
                     onTogglePause={() => {
@@ -1204,12 +1240,13 @@ function EmpHeader({ emp, emps, onUpdate, onDragStart }) {
 }
 
 /* ═══ DAY CELL ═════════════════════════════════════════════ */
-function DayCell({ dayData, wts, empColor, onUpdate, date, onStartDay, onOpenEndDay, onTogglePause }) {
+function DayCell({ dayData, wts, empColor, onUpdate, date, onStartDay, onOpenEndDay, onTogglePause, empId, dayIdx, onTaskDragOut }) {
   const tasks = dayData?.tasks || [];
   const updF = (f, v) => onUpdate({ ...dayData, [f]: v });
   const [dragTaskIdx, setDragTaskIdx] = useState(null);
   const [dragOverTaskIdx, setDragOverTaskIdx] = useState(null);
   const [stratDragOver, setStratDragOver] = useState(false);
+  const [crossDragOver, setCrossDragOver] = useState(false);
 
   const today0 = new Date(); today0.setHours(0,0,0,0);
   const isToday = date && date.getTime() === today0.getTime();
@@ -1225,16 +1262,30 @@ function DayCell({ dayData, wts, empColor, onUpdate, date, onStartDay, onOpenEnd
   const updTask = (updated) => onUpdate({ ...dayData, tasks: tasks.map(t => t.id === updated.id ? updated : t) });
   const rmTask = (id) => onUpdate({ ...dayData, tasks: tasks.filter(t => t.id !== id) });
 
-  // После сортировки — пересчитываем приоритет по позиции
   const renumber = (arr) => arr.map((t, i) => ({ ...t, priority: String(i + 1) }));
+  const totalFact = tasks.reduce((s, t) => {
+    const tracked = (t.sessions||[]).reduce((a,p) => a + Math.round((new Date(p.end)-new Date(p.start))/60000), 0);
+    return s + (tracked > 0 ? tracked : (parseMinutes(t.timeRange) ?? parseInt(t.fact) || 0));
+  }, 0);
+  const doneCnt = tasks.filter(t => t.status === "done" || t.done).length;
 
   const handleTaskDrop = (toIdx) => {
+    // Дроп из стратегии
     if (_stratDrag) {
       const newTask = { ...emptyTask(), ...(_stratDrag), id: mkId() };
       const arr = renumber([...tasks.slice(0, toIdx + 1), newTask, ...tasks.slice(toIdx + 1)]);
       onUpdate({ ...dayData, tasks: arr });
       _stratDrag = null; setStratDragOver(false); return;
     }
+    // Дроп из другого дня
+    if (_taskDrag && (_taskDrag.empId !== empId || _taskDrag.dayIdx !== dayIdx)) {
+      const incoming = { ..._taskDrag.task, id: mkId() };
+      const arr = renumber([...tasks.slice(0, toIdx + 1), incoming, ...tasks.slice(toIdx + 1)]);
+      onUpdate({ ...dayData, tasks: arr });
+      onTaskDragOut?.(_taskDrag.empId, _taskDrag.dayIdx, _taskDrag.task.id);
+      _taskDrag = null; setDragTaskIdx(null); setDragOverTaskIdx(null); return;
+    }
+    // Дроп внутри того же дня
     if (dragTaskIdx === null || dragTaskIdx === toIdx) { setDragTaskIdx(null); setDragOverTaskIdx(null); return; }
     const arr = [...tasks]; const [m] = arr.splice(dragTaskIdx, 1); arr.splice(toIdx, 0, m);
     onUpdate({ ...dayData, tasks: renumber(arr) }); setDragTaskIdx(null); setDragOverTaskIdx(null);
@@ -1243,19 +1294,26 @@ function DayCell({ dayData, wts, empColor, onUpdate, date, onStartDay, onOpenEnd
   // Drop on cell body (adds to end)
   const handleCellDrop = (e) => {
     e.preventDefault();
+    setCrossDragOver(false);
+    // Дроп задачи из другого дня
+    if (_taskDrag && (_taskDrag.empId !== empId || _taskDrag.dayIdx !== dayIdx)) {
+      const incoming = { ..._taskDrag.task, id: mkId() };
+      const arr = renumber([...tasks, incoming]);
+      onUpdate({ ...dayData, tasks: arr });
+      onTaskDragOut?.(_taskDrag.empId, _taskDrag.dayIdx, _taskDrag.task.id);
+      _taskDrag = null; setStratDragOver(false); return;
+    }
+    // Дроп из стратегии
     if (!_stratDrag) return;
     const newTask = { ...emptyTask(), ...(_stratDrag), id: mkId() };
     onUpdate({ ...dayData, tasks: [...tasks, newTask] });
     _stratDrag = null; setStratDragOver(false);
   };
 
-  const totalFact = tasks.reduce((s, t) => { const m = parseMinutes(t.timeRange); return s + (m ?? (parseInt(t.fact) || 0)); }, 0);
-  const doneCnt = tasks.filter(t => t.done).length;
-
   return (
-    <div style={{ background: C.card, borderRadius: 10, overflow: "hidden", border: `1px solid ${stratDragOver ? C.gold : C.border}`, boxShadow: stratDragOver ? `0 0 0 3px rgba(200,146,42,.2)` : "none", transition: "border-color .15s, box-shadow .15s" }}
-      onDragOver={e => { e.preventDefault(); if (_stratDrag) setStratDragOver(true); }}
-      onDragLeave={() => setStratDragOver(false)}
+    <div style={{ background: C.card, borderRadius: 10, overflow: "hidden", border: `1px solid ${crossDragOver ? C.gold : stratDragOver ? C.gold : C.border}`, boxShadow: (crossDragOver || stratDragOver) ? `0 0 0 3px rgba(200,146,42,.2)` : "none", transition: "border-color .15s, box-shadow .15s" }}
+      onDragOver={e => { e.preventDefault(); if (_stratDrag) setStratDragOver(true); if (_taskDrag && (_taskDrag.empId !== empId || _taskDrag.dayIdx !== dayIdx)) setCrossDragOver(true); }}
+      onDragLeave={() => { setStratDragOver(false); setCrossDragOver(false); }}
       onDrop={handleCellDrop}>
       <div style={{ height: 3, background: empColor }} />
       <div style={{ padding: "8px 10px" }}>
@@ -1283,7 +1341,8 @@ function DayCell({ dayData, wts, empColor, onUpdate, date, onStartDay, onOpenEnd
             onChange={updTask}
             onDelete={() => rmTask(task.id)}
             onAddBelow={() => addTask(i)}
-            onDragStart={() => setDragTaskIdx(i)}
+            onDragStart={() => { setDragTaskIdx(i); _taskDrag = { task: task, empId, dayIdx }; }}
+            onDragEnd={() => { setDragTaskIdx(null); setDragOverTaskIdx(null); _taskDrag = null; }}
             onDragOver={(e) => { e.preventDefault(); setDragOverTaskIdx(i); }}
             onDrop={() => handleTaskDrop(i)}
             onDragLeave={() => setDragOverTaskIdx(p => p === i ? null : p)} />
@@ -1709,13 +1768,13 @@ function DayView({ wd, emps, wts, dates, selectedDay, onSelectDay, onUpdDay }) {
       {emps.map(emp => {
         const ed = wd.employees.find(e => e.employeeId === emp.id);
         const dayData = ed?.days[selectedDay] || { dayIndex: selectedDay, schedule: "", dayResult: "", tasks: [] };
-        return <DayViewEmployee key={emp.id} emp={emp} dayData={dayData} wts={wts} onUpdate={(dd) => onUpdDay(emp.id, selectedDay, dd)} />;
+        return <DayViewEmployee key={emp.id} emp={emp} dayData={dayData} wts={wts} onUpdate={(dd) => onUpdDay(emp.id, selectedDay, dd)} empId={emp.id} dayIdx={selectedDay} />;
       })}
     </div>
   );
 }
 
-function DayViewEmployee({ emp, dayData, wts, onUpdate }) {
+function DayViewEmployee({ emp, dayData, wts, onUpdate, empId, dayIdx }) {
   const tasks = dayData?.tasks || [];
   const updF = (f, v) => onUpdate({ ...dayData, [f]: v });
   const [dragTaskIdx, setDragTaskIdx] = useState(null);
@@ -1734,7 +1793,7 @@ function DayViewEmployee({ emp, dayData, wts, onUpdate }) {
   };
 
   const doneCnt = tasks.filter(t => t.done).length;
-  const totalFact = tasks.reduce((s, t) => { const m = parseMinutes(t.timeRange); return s + (m ?? (parseInt(t.fact) || 0)); }, 0);
+  const totalFact = tasks.reduce((s, t) => { const m = parseMinutes(t.timeRange); return s + (m ?? parseInt(t.fact) || 0); }, 0);
   const totalPlan = tasks.reduce((s, t) => s + (parseInt(t.plan) || 0), 0);
 
   return (
@@ -1787,7 +1846,8 @@ function DayViewEmployee({ emp, dayData, wts, onUpdate }) {
             {tasks.map((t, i) => (
               <DayTaskRow key={t.id} task={t} wts={wts} onChange={updTask} onDelete={() => rmTask(t.id)} onAddBelow={() => addTask(i)}
                 isDragOver={dragOverTaskIdx === i && dragTaskIdx !== i}
-                onDragStart={() => setDragTaskIdx(i)}
+                onDragStart={() => { setDragTaskIdx(i); _taskDrag = { task: t, empId, dayIdx }; }}
+                onDragEnd={() => { setDragTaskIdx(null); setDragOverTaskIdx(null); _taskDrag = null; }}
                 onDragOver={(e) => { e.preventDefault(); setDragOverTaskIdx(i); }}
                 onDrop={() => handleTaskDrop(i)}
                 onDragLeave={() => setDragOverTaskIdx(p => p === i ? null : p)} />
@@ -2702,7 +2762,7 @@ function Analytics({ wd, emps, wts, dates, cw }) {
       day.tasks.forEach(t => {
         total++; if (t.done) done++;
         totalPlan += parseInt(t.plan) || 0;
-        const m = parseMinutes(t.timeRange) ?? (parseInt(t.fact) || 0);
+        const m = parseMinutes(t.timeRange) ?? parseInt(t.fact) || 0;
         totalFact += m; dayFact[di] += m;
         if (t.workType && m > 0) wtBreak[t.workType] = (wtBreak[t.workType] || 0) + m;
       });
@@ -3191,7 +3251,6 @@ function CalDay({ viewDate, getDateTasks, today0, wts }) {
     if (!placed) cols.push([{ t, pos }]);
   });
   const nCols = Math.max(cols.length, 1);
-  const doneCnt = tasks.filter(t => t.done).length;
 
   return (
     <div style={{ background: C.card, borderRadius: 14, overflow: "hidden", border: `1px solid ${C.border}`, boxShadow: "0 1px 6px rgba(0,0,0,.06)" }}>
