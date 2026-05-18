@@ -461,7 +461,7 @@ export default function App() {
       const e = migrateEmps(await store.get("cfg:emps")); if (e?.length) setEmps(e);
       const w = await store.get("cfg:wts"); if (w?.length) setWts(w);
       const k = await store.get("cfg:keys"); if (k) setAllKeys(k);
-      const p = await store.get("cfg:projects"); if (p?.length) setProjects(p);
+      const d = await store.get("cfg:devices"); if (d?.length) setDevices(d);
     })();
   }, []);
 
@@ -506,6 +506,8 @@ export default function App() {
 
   const saveEmps = useCallback((e) => { setEmps(e); store.set("cfg:emps", e); }, []);
   const saveWts = useCallback((w) => { setWts(w); store.set("cfg:wts", w); }, []);
+  const [devices, setDevices] = useState([]);
+  const saveDevices = useCallback((d) => { setDevices(d); store.set("cfg:devices", d); }, []);
   const saveProjects = useCallback((p) => { setProjects(p); store.set("cfg:projects", p); }, []);
 
   const [resumePrompt, setResumePrompt] = useState(null);
@@ -516,18 +518,36 @@ export default function App() {
   const HB_INTERVAL = 8000;   // пишем каждые 8 сек
   const HB_GRACE = 18000;     // активен если < 18 сек назад
 
-  // Heartbeat — пишем метку пока вкладка видна
+  // Heartbeat + регистрация устройства
   useEffect(() => {
     const writeHB = () => {
-      if (document.visibilityState === "visible")
+      if (document.visibilityState === "visible") {
         localStorage.setItem(HB_KEY, Date.now().toString());
+        // Регистрируем устройство при каждом визите
+        const deviceId = localStorage.getItem("tp_device_id") || (() => {
+          const fp = [navigator.userAgent, screen.width+"x"+screen.height, Intl.DateTimeFormat().resolvedOptions().timeZone].join("|");
+          let h = 0; for (let i=0;i<fp.length;i++){h=((h<<5)-h)+fp.charCodeAt(i);h|=0;}
+          const id = "dev_"+Math.abs(h).toString(36);
+          localStorage.setItem("tp_device_id", id); return id;
+        })();
+        const deviceName = `${navigator.platform || "Unknown"} · ${navigator.userAgent.match(/Chrome|Firefox|Safari|Edge/)?.[0] || "Browser"}`;
+        store.get("cfg:devices").then(devs => {
+          const list = devs || [];
+          const existing = list.find(d => d.id === deviceId);
+          if (!existing) {
+            const newDev = { id: deviceId, name: deviceName, status: list.length === 0 ? "allowed" : "pending", firstSeen: new Date().toISOString(), lastSeen: new Date().toISOString() };
+            const updated = [...list, newDev];
+            saveDevices(updated);
+          } else {
+            const updated = list.map(d => d.id === deviceId ? { ...d, lastSeen: new Date().toISOString() } : d);
+            saveDevices(updated);
+          }
+        });
+      }
     };
     writeHB();
     heartbeatTimer.current = setInterval(writeHB, HB_INTERVAL);
-    return () => {
-      clearInterval(heartbeatTimer.current);
-      // Не удаляем ключ — другая вкладка может быть открыта
-    };
+    return () => clearInterval(heartbeatTimer.current);
   }, []);
 
   // Есть ли активная сессия в другом браузере/вкладке (< 18 сек назад)?
@@ -555,13 +575,17 @@ export default function App() {
 
   // Авто-пауза при неактивности или скрытии вкладки
   useEffect(() => {
+    const pauseDay = (empId, di, dayData) => {
+      updDay(empId, di, { ...dayData, pauseStart: new Date().toISOString() });
+    };
+
     const autoPause = () => {
-      // Не ставим паузу если пользователь активен в другом браузере/вкладке
-      if (isActiveElsewhere()) return;
+      if (isActiveElsewhere()) return; // активен в другом браузере — не паузим
       const active = getActiveDays();
       if (active.length === 0) return;
       active.forEach(({ empId, di }) => {
-        updDay(empId, di, { pauseStart: new Date().toISOString() });
+        const day = wd?.employees.find(e => e.employeeId === empId)?.days[di];
+        if (day) pauseDay(empId, di, day);
       });
       setResumePrompt(active[0]);
     };
@@ -573,38 +597,48 @@ export default function App() {
 
     const onVisible = () => {
       if (document.visibilityState === "hidden") {
-        // Выключили компьютер / закрыли крышку → останавливаем все активные таймеры задач
         setTimeout(() => {
-          if (!isActiveElsewhere()) {
-            autoPause();
-            // Останавливаем таймеры задач — закрываем незавершённые сессии
-            setWd(prev => {
-              if (!prev) return prev;
-              let changed = false;
-              const now = new Date().toISOString();
-              const updated = {
-                ...prev,
-                employees: prev.employees.map(ed => ({
-                  ...ed,
-                  days: ed.days.map(day => {
-                    const tasks = day.tasks.map(t => {
-                      if (!t.timerStart) return t;
-                      changed = true;
-                      const session = { start: t.timerStart, end: now };
-                      const sessions = [...(t.sessions || []), session];
-                      const newTotal = Math.round(sessions.reduce((s,p) => s + (new Date(p.end) - new Date(p.start)), 0) / 60000);
-                      return { ...t, timerStart: null, sessions, fact: String(newTotal) };
-                    });
-                    return { ...day, tasks };
-                  })
-                }))
-              };
-              if (changed) { saveWd(updated); return updated; }
-              return prev;
-            });
-          }
+          if (isActiveElsewhere()) return; // другой браузер активен — ничего не делаем
+          const now = new Date().toISOString();
+          // Ставим паузу дня И останавливаем таймеры задач
+          setWd(prev => {
+            if (!prev) return prev;
+            let changed = false;
+            const today = new Date(); today.setHours(0,0,0,0);
+            const todayIdx = (today.getDay() + 6) % 7;
+            const updated = {
+              ...prev,
+              employees: prev.employees.map(ed => ({
+                ...ed,
+                days: ed.days.map((day, di) => {
+                  let d = { ...day };
+                  // Пауза рабочего дня (если не на паузе и не завершён)
+                  if (di === todayIdx && d.startTime && !d.endTime && !d.pauseStart) {
+                    d = { ...d, pauseStart: now };
+                    changed = true;
+                  }
+                  // Стоп таймеров задач
+                  const tasks = d.tasks.map(t => {
+                    if (!t.timerStart) return t;
+                    changed = true;
+                    const session = { start: t.timerStart, end: now };
+                    const sessions = [...(t.sessions || []), session];
+                    const newTotal = Math.round(sessions.reduce((s,p) => s + (new Date(p.end) - new Date(p.start)), 0) / 60000);
+                    return { ...t, timerStart: null, sessions, fact: String(newTotal) };
+                  });
+                  return { ...d, tasks };
+                })
+              }))
+            };
+            if (changed) { saveWd(updated); return updated; }
+            return prev;
+          });
+          // Показать запрос на возобновление дня
+          const active = getActiveDays();
+          if (active.length > 0) setResumePrompt(active[0]);
         }, 2000);
       } else {
+        // Вернулись к работе — проверяем была ли пауза
         const today = new Date(); today.setHours(0,0,0,0);
         const todayIdx = (today.getDay() + 6) % 7;
         const paused = [];
@@ -835,12 +869,38 @@ export default function App() {
         ) : tab === "analytics" ? (
           <Analytics wd={wd} emps={emps} wts={wts} dates={dates} cw={cw} />
         ) : (
-          <SettingsView emps={emps} wts={wts} onEmps={saveEmps} onWts={saveWts} />
+          <SettingsView emps={emps} wts={wts} onEmps={saveEmps} onWts={saveWts} devices={devices} onDevices={saveDevices} />
         )}
       </main>
 
       {/* Баннер: возобновить рабочий день после паузы */}
-      {resumePrompt && (
+      {/* Проверка доступа устройства */}
+      {(() => {
+        const deviceId = localStorage.getItem("tp_device_id");
+        const dev = devices.find(d => d.id === deviceId);
+        if (!dev || dev.status === "allowed") return null;
+        if (dev.status === "pending") return (
+          <div style={{ position: "fixed", inset: 0, background: C.dark, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9000, flexDirection: "column", gap: 16 }}>
+            <div style={{ fontSize: 48 }}>⏳</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: "#E8E0D0" }}>Ожидание доступа</div>
+            <div style={{ fontSize: 14, color: "#6B7280", textAlign: "center", maxWidth: 320, lineHeight: 1.6 }}>
+              Ваше устройство ожидает подтверждения администратором.<br />
+              Попросите администратора разрешить доступ в разделе Настройки → Устройства.
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", marginTop: 8, fontFamily: "monospace" }}>ID: {deviceId}</div>
+          </div>
+        );
+        if (dev.status === "blocked") return (
+          <div style={{ position: "fixed", inset: 0, background: C.dark, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9000, flexDirection: "column", gap: 16 }}>
+            <div style={{ fontSize: 48 }}>🚫</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: "#EF4444" }}>Доступ заблокирован</div>
+            <div style={{ fontSize: 14, color: "#6B7280", textAlign: "center" }}>
+              Это устройство заблокировано администратором.
+            </div>
+          </div>
+        );
+        return null;
+      })()}
         <ResumePrompt
           empName={resumePrompt.empName}
           emoji={resumePrompt.emoji}
@@ -3385,7 +3445,7 @@ function CalDay({ viewDate, getDateTasks, today0, wts }) {
 }
 
 /* ═══ SETTINGS ══════════════════════════════════════════════ */
-function SettingsView({ emps, wts, onEmps, onWts }) {
+function SettingsView({ emps, wts, onEmps, onWts, devices = [], onDevices }) {
   const [es, setEs] = useState(emps);
   const [ws, setWs] = useState(wts);
   const [newE, setNewE] = useState(""), [newW, setNewW] = useState("");
@@ -3485,6 +3545,51 @@ function SettingsView({ emps, wts, onEmps, onWts }) {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      <div style={{ ...cardS, gridColumn: "1 / -1" }}>
+        <div style={{ fontWeight: 700, fontSize: 15, color: C.dark, marginBottom: 14 }}>🖥 Устройства и доступ</div>
+        <div style={{ fontSize: 12, color: C.muted, marginBottom: 12 }}>
+          Первое устройство автоматически получает доступ. Все последующие — ожидают одобрения.
+        </div>
+        {devices.length === 0 && <div style={{ color: C.muted, fontSize: 13 }}>Нет подключённых устройств</div>}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {devices.map(dev => {
+            const isCurrent = dev.id === localStorage.getItem("tp_device_id");
+            const statusColor = { allowed: C.success, pending: "#D97706", blocked: C.danger };
+            const statusLabel = { allowed: "✅ Разрешён", pending: "⏳ Ожидает", blocked: "🚫 Заблокирован" };
+            return (
+              <div key={dev.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", background: isCurrent ? "#F5F9FF" : "#F9F8F6", borderRadius: 10, border: `1px solid ${isCurrent ? "#93C5FD" : C.border}` }}>
+                <div style={{ fontSize: 20 }}>💻</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: C.dark }}>
+                    {dev.name} {isCurrent && <span style={{ fontSize: 10, color: "#3B82F6", fontWeight: 400 }}>· это устройство</span>}
+                  </div>
+                  <div style={{ fontSize: 10, color: C.muted, marginTop: 2 }}>
+                    Первый вход: {new Date(dev.firstSeen).toLocaleDateString("ru-RU", { day: "numeric", month: "short", year: "numeric" })} ·
+                    Последний: {new Date(dev.lastSeen).toLocaleDateString("ru-RU", { day: "numeric", month: "short" })}
+                  </div>
+                  <div style={{ fontSize: 10, color: C.muted, fontFamily: "monospace", marginTop: 1 }}>{dev.id}</div>
+                </div>
+                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: statusColor[dev.status] }}>{statusLabel[dev.status]}</span>
+                  {dev.status !== "allowed" && (
+                    <button onClick={() => onDevices(devices.map(d => d.id === dev.id ? { ...d, status: "allowed" } : d))}
+                      style={{ ...btnS("primary"), fontSize: 11, padding: "3px 10px" }}>Разрешить</button>
+                  )}
+                  {dev.status !== "blocked" && !isCurrent && (
+                    <button onClick={() => onDevices(devices.map(d => d.id === dev.id ? { ...d, status: "blocked" } : d))}
+                      style={{ ...btnS("danger"), fontSize: 11, padding: "3px 10px" }}>Заблокировать</button>
+                  )}
+                  {!isCurrent && (
+                    <button onClick={() => { if (window.confirm("Удалить устройство?")) onDevices(devices.filter(d => d.id !== dev.id)); }}
+                      style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontSize: 16 }}>✕</button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
