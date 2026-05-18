@@ -901,6 +901,7 @@ export default function App() {
         );
         return null;
       })()}
+      {resumePrompt && (
         <ResumePrompt
           empName={resumePrompt.empName}
           emoji={resumePrompt.emoji}
