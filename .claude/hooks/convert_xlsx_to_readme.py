@@ -139,6 +139,17 @@ def validate_project(proj: Path) -> list:
     if final_video.exists() and not lessons.exists():
         warnings.append("v_final.mp4 shipped but lessons_learned.md not filled")
 
+    # Build dirs without WORKFLOW_STATE.md → in-progress iteration not tracked
+    for build_dir in sorted(proj.glob("v*_build")):
+        if build_dir.is_dir() and not (build_dir / "WORKFLOW_STATE.md").exists():
+            # Skip if iteration is already complete (final.mp4 exists)
+            if not final_video.exists():
+                warnings.append(f"{build_dir.name}/ has no WORKFLOW_STATE.md")
+
+    # No time_log.md → missing iteration metrics
+    if (proj / "v1_build").exists() and not (proj / "time_log.md").exists():
+        warnings.append("time_log.md missing (use _utils/time_log_template.md)")
+
     return warnings
 
 

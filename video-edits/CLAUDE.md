@@ -186,7 +186,12 @@ eq=contrast=1.10:saturation=1.10,colorbalance=rs=-0.04:bs=0.05:rm=0.03:bm=-0.04:
 
 - ✅ `projects/project_001_noface/` — обложка паспорта из Таиланда (v12, 48.6с)
 - ✅ `projects/project_002_tiger_park/` — Tiger World, Ратчабури (v5, 108с) — premium-paradigm установлена
-- `finals/wispr_v9.mp4` — Wispr Flow (одобрен)
-- `finals/plan_final.mp4` — Planner туториал (13:06)
+- `finals/` — **legacy архив** старых проектов (Wispr Flow, Planner). Новые проекты держат `v_final.mp4` внутри `projects/<X>/`, не переносим.
 
 Для деталей каждого — открыть его `README.md`.
+
+## Workflow tracking (per-project)
+
+В каждой папке `vN_build/` создавать **`WORKFLOW_STATE.md`** (шаблон в `_utils/workflow_state_template.md`) — отмечаю прогресс по гейтам A1→B12. Тебе видно где я сейчас.
+
+В корне каждого проекта вести **`time_log.md`** (шаблон в `_utils/time_log_template.md`) — фиксирую старт/финиш каждой итерации. Метрика «итераций × минут на проект» для бенчмарка прогресса.
