@@ -25,6 +25,17 @@
 | `all_good_now/aqualina_orange_hues_201s.mp3` | 3:21 | Aqualina — Orange Hues |
 | `all_good_now/tony_anderson_aisha_293s.mp3` | 4:53 | Tony Anderson — Aisha |
 
+### Категория «Вызвать сопереживание» (`empathy/`)
+
+Когда применять: личные истории, эмоция, рефлексия, грусть.
+
+| Файл | Длительность |
+|---|---|
+| `empathy/track_03_92s.mp3` | 1:32 |
+| `empathy/track_04_174s.mp3` | 2:54 |
+| `empathy/track_05_129s.mp3` | 2:09 |
+| `empathy/track_06_446s.mp3` | 7:26 |
+
 **Важно:** музыка от пользователя из её собственной библиотеки. Использовать только в рамках её проектов.
 
 ## sources/ (39MB)
