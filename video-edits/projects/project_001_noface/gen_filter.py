@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
 Generate filter_complex for project_001 v6.
-FIXED v3 criticals:
-  - [AUDIO] narrator split → copy1 for sidechain key, copy2 for mix
-  - [VIDEO] removed pp_7010563 (passport stock) + sv_36861553 (street vendor stock)
-             replaced with own footage: IMG_0506.mp4 + IMG_7983 (product photo)
-  - [VIDEO] pexels kept ONLY for ambient: night market, leather craft, blacksmith
+V6 changes:
+  - [INPUT] removed IMG_0468 (stock vendor); added cover_green_dragon_clean [0] + cover_black_mustache_clean [1]
+  - [M1]   M1 hook now shows own product covers (no stock footage)
+  - [M2]   IMG_0620 scale fixed: scale=-2:1493,crop=840:1493 (was odd-width 2667 → black hole)
+  - [FINALE] single hero cover_green_dragon_clean at 700x948, center y=400; no collage
+  - [AUDIO]  narrator volume=2.0, music vol=0.06, sidechain ratio=20/attack=5/release=300
 """
 
 BASE  = "/Users/natasa/teamplaner2/video-edits"
@@ -14,24 +15,23 @@ RCB   = "/System/Volumes/Data/Applications/captions.app/Contents/Resources/Robot
 CAV   = f"{BASE}/fonts/Caveat.ttf"
 
 # ──────────────────────────────────────────────
-#  INPUT INDEX MAP
-# [0]  stream_loop  IMG_0468.mp4          → M1 hook
-# [1]              nm_28515504            → M2 night market people (ambient)
-# [2]              IMG_0620 lanterns      → M2 lanterns own footage
-# [3]              nm_28515508            → M2 woman food (ambient)
-# [4]              lw_34740034            → M3 leather craft (ambient)
-# [5]              IMG_0932.mp4           → M3 hands (own footage, split)
-# [6]              ch_36164500            → M3 blacksmith hammer (ambient)
-# [7]  stream_loop  IMG_1110.mp4          → M4 product (own footage)
-# [8]              IMG_0506.mp4           → M4 own footage (NO stock)
-# [9]  loop 1      IMG_7983.png           → M4+finale product (own, split)
-# [10] loop 1      cover_black_mustache   → finale slide
-# [11] loop 1      cover_green_dragon     → finale slide
-# [12]             narrator_audio_53.5s   → audio
-# [13]             music aqualina         → audio
-# [14]             dust_swoosh SFX        → audio
-# [15]             cartoon_bubble_pop     → audio
-# [16]             film_title_transition  → audio
+#  INPUT INDEX MAP  (16 inputs total)
+# [0]  loop1       cover_green_dragon_clean.png → M1 right cover + finale hero (split)
+# [1]  loop1       cover_black_mustache_clean.png → M1 left cover
+# [2]              nm_28515504                  → M2 night market people (ambient)
+# [3]              IMG_0620 lanterns            → M2 lanterns own footage (FIXED scale)
+# [4]              nm_28515508                  → M2 woman food (ambient)
+# [5]              lw_34740034                  → M3 leather craft (ambient)
+# [6]              IMG_0932.mp4                 → M3 hands (own footage, split)
+# [7]              ch_36164500                  → M3 blacksmith hammer (ambient)
+# [8]  stream_loop IMG_1110.mp4                 → M4 product (own footage)
+# [9]              IMG_0506.mp4                 → M4 own footage
+# [10] loop1       IMG_7983.png                 → M4 product photo (c11)
+# [11]             narrator_audio_53.5s         → audio
+# [12]             music aqualina               → audio
+# [13]             dust_swoosh SFX              → audio
+# [14]             cartoon_bubble_pop           → audio
+# [15]             film_title_transition        → audio
 # ──────────────────────────────────────────────
 
 SUBS = [
@@ -141,68 +141,80 @@ def accent_cmd(t_in, t_out, text, size, x, y, color, font):
 # ──────────────────────────────────────────────
 parts = []
 FIF = "scale=-2:1493,crop=840:1493"
-N   = "fps=30,"   # normalize fps
+N   = "fps=30,"
 
 # ── 1. VIDEO CLIP PREPROCESSING ──────────────────────────────────
-# M1 (0-6.4s): IMG_0468 looped, portrait 720×1280
-parts.append(f"[0:v]{N}loop=loop=-1:size=147:start=0,trim=duration=6.4,setpts=PTS-STARTPTS+0.0/TB,{FIF}[c1]")
-# M2 (6.4-16.8s): ambient night market + own footage
-parts.append(f"[1:v]{N}trim=duration=3.4,setpts=PTS-STARTPTS+6.4/TB,{FIF}[c2]")   # nm_28515504
-parts.append(f"[2:v]{N}trim=duration=3.5,setpts=PTS-STARTPTS+9.8/TB,scale=2667:1493,crop=840:1493[c3]")  # IMG_0620 horizontal
-parts.append(f"[3:v]{N}trim=duration=3.5,setpts=PTS-STARTPTS+13.3/TB,{FIF}[c4]")  # nm_28515508
+
+# Cover PNGs (RGBA, no colorkey needed)
+# Green dragon: split for M1 right + finale hero
+parts.append("[0:v]fps=30,split=2[cg_m1raw][cg_finraw]")
+# M1 display: scale to 460px wide → 460×627
+parts.append("[cg_m1raw]scale=460:-2,trim=duration=6.4,setpts=PTS-STARTPTS[m1_cg]")
+# Finale hero: scale to 700px wide → 700×948, center at y=400 → y_top=400-474=-74
+parts.append("[cg_finraw]scale=700:-2,setpts=PTS-STARTPTS+39.9/TB[fin_hero]")
+# Black mustache: M1 left cover, scale to 420px wide → 420×577
+parts.append("[1:v]fps=30,scale=420:-2,trim=duration=6.4,setpts=PTS-STARTPTS[m1_bm]")
+
+# M2 (6.4-16.8s): ambient night market + own lanterns footage
+parts.append(f"[2:v]{N}trim=duration=3.4,setpts=PTS-STARTPTS+6.4/TB,{FIF}[c2]")
+# IMG_0620 FIX: use -2 for auto even-width (was 2667 odd → black hole)
+parts.append(f"[3:v]{N}trim=duration=3.5,setpts=PTS-STARTPTS+9.8/TB,{FIF}[c3]")
+parts.append(f"[4:v]{N}trim=duration=3.5,setpts=PTS-STARTPTS+13.3/TB,{FIF}[c4]")
+
 # M3 (16.8-28.8s): leather ambient + own footage + blacksmith ambient
-parts.append(f"[4:v]{N}trim=duration=3.5,setpts=PTS-STARTPTS+16.8/TB,{FIF}[c5]")  # lw_34740034 leather
-parts.append(f"[5:v]{N}split=2[img0932a][img0932b]")
-parts.append(f"[img0932a]trim=end=3.5,setpts=PTS-STARTPTS+20.3/TB,{FIF}[c6]")     # IMG_0932 first 3.5s
-parts.append(f"[6:v]{N}trim=duration=3.5,setpts=PTS-STARTPTS+23.8/TB,{FIF}[c7]")  # ch_36164500 blacksmith
-parts.append(f"[img0932b]trim=start=4.0:end=5.8,setpts=PTS-STARTPTS+27.3/TB,{FIF}[c8]")  # IMG_0932 tail
-# M4 (28.8-40.0s): OWN FOOTAGE ONLY (no passport/product stock)
-parts.append(f"[7:v]{N}loop=loop=-1:size=66:start=0,trim=duration=3.2,setpts=PTS-STARTPTS+28.8/TB,{FIF}[c9]")  # IMG_1110
-parts.append(f"[8:v]{N}trim=duration=3.83,setpts=PTS-STARTPTS+32.0/TB,{FIF}[c10]")  # IMG_0506 own
-# IMG_7983 (own product photo) — split for M4 tail + finale
-parts.append(f"[9:v]{N}scale=-2:1493,crop=840:1493,split=2[img7983a][img7983b]")
-parts.append(f"[img7983a]trim=duration=4.17,setpts=PTS-STARTPTS+35.83/TB[c11]")    # M4 35.83-40.0
-parts.append(f"[img7983b]setpts=PTS-STARTPTS+39.9/TB[fin_bg]")                      # M5 finale 39.9-49.1
-# Finale cover cards (own product photos)
-parts.append(f"[10:v]{N}colorkey=color=0xFFFFFF:similarity=0.12:blend=0.05,scale=440:-2[cov_black]")
-parts.append(f"[11:v]{N}colorkey=color=0xFFFFFF:similarity=0.12:blend=0.05,scale=440:-2[cov_green]")
+parts.append(f"[5:v]{N}trim=duration=3.5,setpts=PTS-STARTPTS+16.8/TB,{FIF}[c5]")
+parts.append(f"[6:v]{N}split=2[img0932a][img0932b]")
+parts.append(f"[img0932a]trim=end=3.5,setpts=PTS-STARTPTS+20.3/TB,{FIF}[c6]")
+parts.append(f"[7:v]{N}trim=duration=3.5,setpts=PTS-STARTPTS+23.8/TB,{FIF}[c7]")
+parts.append(f"[img0932b]trim=start=4.0:end=5.8,setpts=PTS-STARTPTS+27.3/TB,{FIF}[c8]")
+
+# M4 (28.8-40.0s): OWN FOOTAGE ONLY
+parts.append(f"[8:v]{N}loop=loop=-1:size=66:start=0,trim=duration=3.2,setpts=PTS-STARTPTS+28.8/TB,{FIF}[c9]")
+parts.append(f"[9:v]{N}trim=duration=3.83,setpts=PTS-STARTPTS+32.0/TB,{FIF}[c10]")
+# IMG_7983: M4 tail only (35.83-40.0s) — no split needed in v6
+parts.append(f"[10:v]{N}scale=-2:1493,crop=840:1493,trim=duration=4.17,setpts=PTS-STARTPTS+35.83/TB[c11]")
 
 # ── 2. BLACK CANVAS BASE ──────────────────────────────────────────
 parts.append("color=c=black:s=1080x1920:r=30:d=49.1[base]")
 
 # ── 3. OVERLAY CHAIN ─────────────────────────────────────────────
+# Layer M2-M4 clips at standard frame-in-frame position (x=120, y=214)
 prev = "base"
-clips = ["c1","c2","c3","c4","c5","c6","c7","c8","c9","c10","c11","fin_bg"]
+clips = ["c2","c3","c4","c5","c6","c7","c8","c9","c10","c11"]
 for i, clip in enumerate(clips):
     out = f"l{i+1:02d}"
     parts.append(f"[{prev}][{clip}]overlay=120:214[{out}]")
     prev = out
 
-# Cover card slide-in for finale
+# M1 covers: left (black mustache) + right (green dragon)
+# eof_action=pass: after 6.4s when these streams end, pass through underlying composite
 parts.append(
-    f"[{prev}][cov_black]overlay="
-    f"x='if(gte(t\\,40.5)\\,min(40\\,(-440+(t-40.5)/0.5*480))\\,-440)'"
-    f":y=190:enable='gte(t,40.4)'[l_cb]"
+    f"[{prev}][m1_bm]overlay=60:680:eof_action=pass[l_m1bm]"
 )
 parts.append(
-    f"[l_cb][cov_green]overlay="
-    f"x='if(gte(t\\,41.2)\\,max(640\\,(1080-(t-41.2)/0.5*440))\\,1080)'"
-    f":y=190:enable='gte(t,41.1)'[l_cg]"
+    "[l_m1bm][m1_cg]overlay=570:610:eof_action=pass[l_m1cg]"
+)
+
+# Finale hero: green dragon centered (700×948), center at y=400 → y_top=-74
+# x=(1080-700)/2=190, y_top=400-474=-74
+# Frames exist from PTS=39.9s onwards (set via setpts), before that passes through
+parts.append(
+    "[l_m1cg][fin_hero]overlay=190:-74[l_fin]"
 )
 
 # ── 4. TEXT OVERLAYS ─────────────────────────────────────────────
 text_cmds = []
-# 120 price box
+# 120 BAT price box (orange fill)
 text_cmds.append(
     "drawbox=x=310:y=240:w=460:h=320:color=0xFF5722@1.0:t=fill"
     ":enable='between(t\\,28.30\\,40.20)'"
 )
-# NATALIA box
+# NATALIA engraving label box
 text_cmds.append(
     "drawbox=x=200:y=195:w=680:h=110:color=0x000000@1.0:t=fill"
     ":enable='between(t\\,21.56\\,23.40)'"
 )
-# Accent text
+# Accent text overlays
 for args in ACCENTS:
     t_in, t_out, text, size, x, y, color, font = args
     text_cmds.append(accent_cmd(t_in, t_out, text, size, x, y, color, font))
@@ -212,39 +224,39 @@ for t_in, t_out, text, hi in SUBS:
 # Color grade
 text_cmds.append("eq=contrast=1.12:saturation=1.08:gamma_r=0.96:gamma_g=1.0:gamma_b=1.04")
 
-filter_v = "[l_cg]" + ",".join(text_cmds) + "[v_out]"
+filter_v = "[l_fin]" + ",".join(text_cmds) + "[v_out]"
 
-# ── 5. AUDIO — CRITICAL FIX ──────────────────────────────────────
-# narrator MUST be split: copy1 → sidechain key, copy2 → final mix
+# ── 5. AUDIO — V6 LEVELS ─────────────────────────────────────────
+# asplit=2: [narrator] → final mix, [narrator_sc] → sidechain key only
 audio_parts = []
 
-# Narrator: atempo + loudnorm + SPLIT
 audio_parts.append(
-    "[12:a]atempo=1.09,"
+    "[11:a]atempo=1.09,"
     "loudnorm=I=-16:TP=-1.5:LRA=11,"
+    "volume=2.0,"                         # +6dB: voice was too quiet vs music
     "asplit=2[narrator][narrator_sc]"
 )
-# Music: sidechain ducked under narrator
-audio_parts.append("[13:a]volume=0.1[mraw]")
+audio_parts.append("[12:a]volume=0.06[mraw]")    # was 0.10 → reduced to not compete with voice
 audio_parts.append(
     "[mraw][narrator_sc]sidechaincompress="
-    "threshold=0.02:ratio=14:attack=8:release=400:"
+    "threshold=0.02:ratio=20:attack=5:release=300:"  # tighter duck: ratio 14→20, faster attack
     "makeup=1:level_sc=2[mducked]"
 )
-# SFX events (in ms): text reveals + price accent + finale
+
+# SFX events: text reveals at key moments
 SFX_MS = [1060, 6400, 10700, 13000, 17000]
-audio_parts.append(f"[14:a]asplit=5[sfxA][sfxB][sfxC][sfxD][sfxE]")
+audio_parts.append("[13:a]asplit=5[sfxA][sfxB][sfxC][sfxD][sfxE]")
 for lbl, ms, vol in zip(["A","B","C","D","E"], SFX_MS, [0.25,0.25,0.22,0.22,0.25]):
     audio_parts.append(f"[sfx{lbl}]adelay={ms}|{ms},volume={vol}[sfx{lbl.lower()}]")
-audio_parts.append(f"[15:a]adelay=28300|28300,volume=0.35[sfxf]")    # price bubble
-audio_parts.append(f"[16:a]adelay=40400|40400,volume=0.20[sfxg]")    # finale transition
-# Final mix: narrator (full volume) + ducked music + SFX
+audio_parts.append("[14:a]adelay=28300|28300,volume=0.35[sfxf]")   # price bubble pop
+audio_parts.append("[15:a]adelay=40400|40400,volume=0.20[sfxg]")   # finale transition
+
 audio_parts.append(
     "[narrator][mducked][sfxa][sfxb][sfxc][sfxd][sfxe][sfxf][sfxg]"
     "amix=inputs=9:normalize=0:duration=first[a_out]"
 )
 
-# ── COMBINE ALL ──────────────────────────────────────────────────
+# ── WRITE OUTPUT ─────────────────────────────────────────────────
 all_parts = parts + [filter_v] + audio_parts
 out_file = f"{PRJ}/filter_v5.txt"
 with open(out_file, "w", encoding="utf-8") as f:
