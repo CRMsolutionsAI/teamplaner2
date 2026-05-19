@@ -1,0 +1,9 @@
+# Symlinks created by transcribe.py at runtime (whisper expects canonical names)
+tiny.pt
+base.pt
+small.pt
+medium.pt
+large.pt
+large-v1.pt
+large-v2.pt
+large-v3.pt
