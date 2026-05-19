@@ -1,0 +1,18 @@
+[0:v]
+
+drawtext=fontfile=/usr/share/fonts/truetype/roboto/unhinted/RobotoCondensed-Bold.ttf:text='СОХРАННОСТЬ':fontcolor=0xFF5722:fontsize=78:x=(w-text_w)/2:y=160:enable='between(t,3,7)':alpha='if(lt(t,3.3),(t-3)/0.3,if(gt(t,6.5),max(0,1-(t-6.5)/0.5),1))':shadowcolor=black:shadowx=3:shadowy=3,
+drawtext=fontfile=/usr/share/fonts/truetype/roboto/unhinted/RobotoCondensed-Bold.ttf:text='ДАННЫХ':fontcolor=0xFF5722:fontsize=78:x=(w-text_w)/2:y=255:enable='between(t,3.4,7)':alpha='if(lt(t,3.7),(t-3.4)/0.3,if(gt(t,6.5),max(0,1-(t-6.5)/0.5),1))':shadowcolor=black:shadowx=3:shadowy=3,
+
+drawtext=fontfile=/usr/share/fonts/truetype/roboto/unhinted/RobotoCondensed-Bold.ttf:text='МИНИ-ПЕРФОРМАНС':fontcolor=0xFFFFFF:fontsize=68:x=(w-text_w)/2:y=200:enable='between(t,9,17)':alpha='if(lt(t,9.3),(t-9)/0.3,if(gt(t,16.5),max(0,1-(t-16.5)/0.5),1))':shadowcolor=black:shadowx=3:shadowy=3,
+
+drawtext=fontfile=/usr/share/fonts/truetype/roboto/unhinted/RobotoCondensed-Bold.ttf:text='ТАКТИЛЬНАЯ':fontcolor=0xFFFFFF:fontsize=72:x=(w-text_w)/2:y=160:enable='between(t,22,32)':alpha='if(lt(t,22.3),(t-22)/0.3,if(gt(t,31.5),max(0,1-(t-31.5)/0.5),1))':shadowcolor=black:shadowx=3:shadowy=3,
+drawtext=fontfile=/usr/share/fonts/truetype/roboto/unhinted/RobotoCondensed-Bold.ttf:text='СИСТЕМА':fontcolor=0xFFFFFF:fontsize=72:x=(w-text_w)/2:y=250:enable='between(t,22.4,32)':alpha='if(lt(t,22.7),(t-22.4)/0.3,if(gt(t,31.5),max(0,1-(t-31.5)/0.5),1))':shadowcolor=black:shadowx=3:shadowy=3,
+
+drawtext=fontfile=/usr/share/fonts/truetype/roboto/unhinted/RobotoCondensed-Bold.ttf:text='120 БАТ':fontcolor=0xFFFFFF:fontsize=140:x=(w-text_w)/2:y=900:enable='between(t,37,47)':alpha='if(lt(t,37.4),(t-37)/0.4,if(gt(t,46.5),max(0,1-(t-46.5)/0.5),1))':box=1:boxcolor=0xFF5722@0.85:boxborderw=20,
+
+drawtext=fontfile=/usr/share/fonts/truetype/roboto/unhinted/RobotoCondensed-Bold.ttf:text='161 ГРН':fontcolor=0xFF5722:fontsize=90:x=(w-text_w)/2:y=1070:enable='between(t,39,47)':alpha='if(lt(t,39.4),(t-39)/0.4,if(gt(t,46.5),max(0,1-(t-46.5)/0.5),1))':box=1:boxcolor=0xFFFFFF@0.9:boxborderw=15,
+
+drawtext=fontfile=/usr/share/fonts/truetype/roboto/unhinted/RobotoCondensed-Bold.ttf:text='ВАШ ПАСПОРТ':fontcolor=0xFFFFFF:fontsize=110:x=(w-text_w)/2:y=720:enable='between(t,47.5,53.5)':alpha='if(lt(t,47.8),(t-47.5)/0.3,1)',
+drawtext=fontfile=video-edits/fonts/Caveat.ttf:text='— ваша история':fontcolor=0xFF5722:fontsize=90:x=(w-text_w)/2:y=870:enable='between(t,48.5,53.5)':alpha='if(lt(t,48.8),(t-48.5)/0.3,1)'
+
+[v_out]
