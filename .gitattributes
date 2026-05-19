@@ -1,0 +1,22 @@
+# Binary files — no merge attempts, no diff noise
+*.mp4 -text -diff
+*.mov -text -diff
+*.MOV -text -diff
+*.m4v -text -diff
+*.mkv -text -diff
+*.webm -text -diff
+*.ogg -text -diff
+*.mp3 -text -diff
+*.wav -text -diff
+*.aac -text -diff
+*.flac -text -diff
+*.heic -text -diff
+*.HEIC -text -diff
+*.heif -text -diff
+*.pt -text -diff
+*.bin -text -diff
+*.onnx -text -diff
+
+# Large text files — disable diff for less noise
+*.srt -diff
+*.vtt -diff
