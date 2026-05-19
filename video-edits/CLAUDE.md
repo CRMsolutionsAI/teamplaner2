@@ -174,6 +174,11 @@ eq=contrast=1.10:saturation=1.10,colorbalance=rs=-0.04:bs=0.05:rm=0.03:bm=-0.04:
 
 # Master mix с лимитером
 [v][s][m]amix=inputs=3:duration=first:weights=1.0 1.0 0.6:normalize=0,alimiter=limit=0.95[out]
+
+# Pitch-shift -50 cents (для соцсетей чтоб не банили музыку по copyright fingerprint)
+# Math: -50¢ = pitch factor 2^(-50/1200) = 0.9716. Compensate speed with atempo 1.0292.
+ffmpeg -i v_final.mp4 -af "asetrate=44100*0.9716,aresample=44100,atempo=1.0292" \
+  -c:v copy v_final_shifted.mp4
 ```
 
 ## Облачные ограничения

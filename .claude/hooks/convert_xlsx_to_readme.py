@@ -115,6 +115,41 @@ def convert(source_path: Path, fmt: str, readme_path: Path, project_name: str) -
     return True
 
 
+UTILS_DIR = Path(__file__).resolve().parents[2] / "video-edits" / "_utils"
+
+
+def _stamp(template_path: Path, output_path: Path, project_name: str):
+    """Copy template, replacing <project name> placeholders + dates."""
+    from datetime import datetime
+    if not template_path.exists():
+        return False
+    text = template_path.read_text(encoding="utf-8")
+    text = text.replace("<project name>", project_name)
+    text = text.replace("<имя>", project_name)
+    text = text.replace("YYYY-MM-DD", datetime.now().strftime("%Y-%m-%d"))
+    output_path.write_text(text, encoding="utf-8")
+    return True
+
+
+def auto_create_artifacts(proj: Path) -> list:
+    """Create missing WORKFLOW_STATE.md / time_log.md from templates. Return list of created files."""
+    created = []
+    # time_log.md in project root
+    tlog = proj / "time_log.md"
+    if not tlog.exists() and (proj / "sources").is_dir():
+        if _stamp(UTILS_DIR / "time_log_template.md", tlog, proj.name):
+            created.append("time_log.md")
+    # WORKFLOW_STATE.md per vN_build/
+    for build_dir in sorted(proj.glob("v*_build")):
+        if build_dir.is_dir():
+            ws = build_dir / "WORKFLOW_STATE.md"
+            # Skip if iteration already complete (final shipped from this proj)
+            if not ws.exists() and not (proj / "v_final.mp4").exists():
+                if _stamp(UTILS_DIR / "workflow_state_template.md", ws, proj.name):
+                    created.append(f"{build_dir.name}/WORKFLOW_STATE.md")
+    return created
+
+
 def validate_project(proj: Path) -> list:
     """Return list of warnings (missing fields, missing lessons_learned, etc.)."""
     warnings = []
@@ -198,6 +233,11 @@ def main():
             )
             status.append(f"{proj.name} ({note})")
 
+        # Auto-create missing tracking artifacts from templates
+        created = auto_create_artifacts(proj)
+        for c in created:
+            project_warnings.append(f"{proj.name}: auto-created {c}")
+
         # Validate every project regardless of conversion
         warns = validate_project(proj)
         for w in warns:
@@ -206,7 +246,7 @@ def main():
     if status:
         print(f"Active video projects: {', '.join(status)}")
     if project_warnings:
-        print("⚠  Project warnings:")
+        print("⚠  Project notes:")
         for w in project_warnings:
             print(f"   • {w}")
 
