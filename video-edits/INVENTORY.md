@@ -70,19 +70,21 @@
 - `r7/` — Реф 7 «снять локации» (Wes Anderson, top-down)
 - `r8/` — Реф 8 «меня депортировали» (сторителлинг, multi-size)
 
-### refY_subs_techniques/
-Партия рефов по техникам субтитров и палитрам (см. `refs_knowledge.md`):
+### refY_subs_techniques/ — серия от @o.siasia («блог про монтаж»)
+9 туториалов по техникам сабов от одного автора (см. `refs_knowledge.md`):
 - `v1/` — Размытая подложка | mp4: `originals/v1_blurred_backdrop.mp4` (6.0с)
 - `v2/` — Подвижная подложка | mp4: `originals/v2_moving_backdrop.mp4` (3.4с)
 - `v3/` — Подложка из стикеров | mp4: `originals/v3_sticker_backdrop.mp4` (3.2с)
 - `v4/` — iOS highlighter | mp4: `originals/v4_ios_highlighter.mp4` (2.9с)
 - `v5/` — Обзор трендов сабов | mp4: `originals/v5_trends_overview.mp4` (2.7с)
-- `v6/` — Чёрная тонкая обводка
-- `v7/` — Съехавшая подложка
-- `v8/` — Пиксельная подложка
-- `v9/` — Размытые геометрические фигуры
+- `v6/` — Чёрная тонкая обводка | mp4: `originals/v6_thin_black_outline.mp4` (2.7с)
+- `v7/` — Съехавшая подложка | mp4: `originals/v7_offset_backdrop.mp4` (3.0с)
+- `v8/` — Пиксельная подложка | mp4: `originals/v8_pixelated_backdrop.mp4` (3.0с)
+- `v9/` — Размытые геометрические фигуры | mp4: `originals/v9_blurred_shapes.mp4` (3.0с)
 - `vA/` — Пастельные палитры
 - `vB/` — Нумерованный хук / hand-drawn
+
+**Атрибуция:** @o.siasia — автор серии туториалов v1-v9. Брендинг: розовые круги, тёмно-коричневый фон, шрифты Caveat-style для tutor-меток.
 
 ## finals/ (33MB)
 - `wispr_v9.mp4` — ✅ Финал Wispr Flow (одобрен)
