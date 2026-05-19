@@ -8,3 +8,7 @@ dist
 
 # MCP config — may contain API keys, don't commit if keys are hardcoded
 video-edits/.mcp.json
+
+# Python bytecode
+__pycache__/
+*.pyc
