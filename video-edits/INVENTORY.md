@@ -10,18 +10,20 @@
 | `planner_chained_866s.aac` | Цепочка из 3 треков «Глубокое погружение» с кроссфейдом, 14:26 | Planner туториал |
 | `whoosh.wav` | Whoosh из исходника in.mp4 | — |
 
-### Uncategorized (требуют категоризации)
-Имена сохранены с порядковым номером из библиотеки Натальи + длительностью:
+### Категория «Как сейчас всё хорошо» (`all_good_now/`)
 
-| Файл | Длительность | Категория (TODO) |
+Когда применять: рассказать что сейчас всё хорошо, утверждение позитива настоящего момента.
+
+| Файл | Длительность | Источник |
 |---|---|---|
-| `uncategorized/track_03_88s.mp3` | 1:28 | ⚠️ Спросить |
-| `uncategorized/track_07_299s.mp3` | 4:59 | ⚠️ Спросить |
-| `uncategorized/track_08_157s.mp3` | 2:37 | ⚠️ Спросить |
-| `uncategorized/track_21_120s.mp3` | 2:00 | ⚠️ Спросить |
-| `uncategorized/track_23_203s.mp3` | 3:23 | ⚠️ Спросить |
-
-После категоризации Натальей перенести в `music/positive/`, `music/empathy/`, `music/all_good_now/`, `music/deep_immersion/`, `music/love_story/`.
+| `all_good_now/track_03_88s.mp3` | 1:28 | библиотека Натальи #3 |
+| `all_good_now/track_07_299s.mp3` | 4:59 | библиотека Натальи #7 |
+| `all_good_now/track_08_157s.mp3` | 2:37 | библиотека Натальи #8 |
+| `all_good_now/track_21_120s.mp3` | 2:00 | библиотека Натальи #21 |
+| `all_good_now/track_23_203s.mp3` | 3:23 | библиотека Натальи #23 |
+| `all_good_now/track_25_79s.mp3` | 1:19 | библиотека Натальи #25 |
+| `all_good_now/aqualina_orange_hues_201s.mp3` | 3:21 | Aqualina — Orange Hues |
+| `all_good_now/tony_anderson_aisha_293s.mp3` | 4:53 | Tony Anderson — Aisha |
 
 **Важно:** музыка от пользователя из её собственной библиотеки. Использовать только в рамках её проектов.
 
