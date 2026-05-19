@@ -7,3 +7,7 @@ large.pt
 large-v1.pt
 large-v2.pt
 large-v3.pt
+whisper-base.pt
+whisper-small.pt
+whisper-medium.pt
+whisper-large*.pt
