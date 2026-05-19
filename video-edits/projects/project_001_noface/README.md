@@ -3,6 +3,8 @@
 **Тип:** «Рассказ без лица» (no-face Reels)
 **Формат:** Вертикаль 1080x1920
 **Длительность:** = длине аудио = **53.5 секунды**
+**Mood:** emotional (lifestyle/travel — personal warmth)
+**Photo policy:** video_then_photo_fallback (lifestyle JPEG для конкретных продукт-моментов)
 
 ## Концепция
 

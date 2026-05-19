@@ -115,12 +115,40 @@ def convert(source_path: Path, fmt: str, readme_path: Path, project_name: str) -
     return True
 
 
+def validate_project(proj: Path) -> list:
+    """Return list of warnings (missing fields, missing lessons_learned, etc.)."""
+    warnings = []
+    readme = proj / "README.md"
+    final_video = proj / "v_final.mp4"
+    lessons = proj / "lessons_learned.md"
+
+    # Required README fields (manual READMEs should have them; auto-gen omits)
+    if readme.exists():
+        text = readme.read_text(encoding="utf-8", errors="ignore")
+        is_auto = AUTO_MARKER in text
+        if not is_auto:
+            required = {
+                "Mood": ["Mood:", "**Mood:**"],
+                "Photo policy": ["Photo policy:", "**Photo policy:**"],
+            }
+            for field, markers in required.items():
+                if not any(m in text for m in markers):
+                    warnings.append(f"README missing field: {field}")
+
+    # If v_final.mp4 exists but lessons_learned.md doesn't → reminder
+    if final_video.exists() and not lessons.exists():
+        warnings.append("v_final.mp4 shipped but lessons_learned.md not filled")
+
+    return warnings
+
+
 def main():
     projects_root = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("video-edits/projects")
     if not projects_root.is_dir():
         return
 
     status = []
+    project_warnings = []
     for proj in sorted(projects_root.iterdir()):
         if not proj.is_dir():
             continue
@@ -159,8 +187,17 @@ def main():
             )
             status.append(f"{proj.name} ({note})")
 
+        # Validate every project regardless of conversion
+        warns = validate_project(proj)
+        for w in warns:
+            project_warnings.append(f"{proj.name}: {w}")
+
     if status:
         print(f"Active video projects: {', '.join(status)}")
+    if project_warnings:
+        print("⚠  Project warnings:")
+        for w in project_warnings:
+            print(f"   • {w}")
 
 
 if __name__ == "__main__":
