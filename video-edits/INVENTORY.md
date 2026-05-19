@@ -72,11 +72,11 @@
 
 ### refY_subs_techniques/
 Партия рефов по техникам субтитров и палитрам (см. `refs_knowledge.md`):
-- `v1/` — Размытая подложка
-- `v2/` — Подвижная подложка
-- `v3/` — Подложка из стикеров
-- `v4/` — iOS highlighter
-- `v5/` — Обзор трендов сабов
+- `v1/` — Размытая подложка | mp4: `originals/v1_blurred_backdrop.mp4` (6.0с)
+- `v2/` — Подвижная подложка | mp4: `originals/v2_moving_backdrop.mp4` (3.4с)
+- `v3/` — Подложка из стикеров | mp4: `originals/v3_sticker_backdrop.mp4` (3.2с)
+- `v4/` — iOS highlighter | mp4: `originals/v4_ios_highlighter.mp4` (2.9с)
+- `v5/` — Обзор трендов сабов | mp4: `originals/v5_trends_overview.mp4` (2.7с)
 - `v6/` — Чёрная тонкая обводка
 - `v7/` — Съехавшая подложка
 - `v8/` — Пиксельная подложка
