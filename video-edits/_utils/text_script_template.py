@@ -17,6 +17,7 @@ from pathlib import Path
 _UTILS = Path(__file__).resolve().parents[2] / "_utils"
 sys.path.insert(0, str(_UTILS.parent))
 from _utils.check_text_width import check_drawtext
+from _utils.align_transcript import load_aligned, time_of_phrase
 
 FONT_BOLD   = "/usr/share/fonts/truetype/roboto/unhinted/RobotoCondensed-Bold.ttf"
 FONT_BLACK  = "/usr/share/fonts/truetype/roboto/unhinted/RobotoTTF/Roboto-Black.ttf"
@@ -46,10 +47,35 @@ def layout_at(t: float) -> str:
 
 
 # ---------------------------------------------------------------------------
-# 2. Text events — (t0, t1, text, font, size, color, x, y, opts)
+# 2. Load aligned transcript — point to voice + transcript paths.
+#    Use time_of_phrase("keyword") to anchor titles to exact spoken words.
+# ---------------------------------------------------------------------------
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+VOICE_WAV = PROJECT_ROOT / "v1_build" / "voice.wav"  # adjust if non-v1
+TRANSCRIPT = PROJECT_ROOT / "sources" / "transcript.txt"
+
+phrases = []
+if VOICE_WAV.exists() and TRANSCRIPT.exists():
+    phrases = load_aligned(VOICE_WAV, TRANSCRIPT)
+    print(f"# Loaded {len(phrases)} aligned phrases", file=sys.stderr)
+
+
+def at(keyword: str, lead: float = 0.15) -> float:
+    """Find time when voice says `keyword`, minus lead-in. Falls back to 0 if not found."""
+    t = time_of_phrase(phrases, keyword)
+    if t is None:
+        print(f"  ⚠  '{keyword}' not found in transcript", file=sys.stderr)
+        return 0.0
+    return max(0.0, t - lead)
+
+
+# ---------------------------------------------------------------------------
+# 3. Text events — (t0, t1, text, font, size, color, x, y, opts)
+#    Use at("keyword") to lock title to actual voice timing.
 # ---------------------------------------------------------------------------
 texts = [
-    # Example entries — replace with project-specific
+    # Example: title locked to actual spoken word, no manual guessing
+    # (at("встреча с тигром"), at("встреча с тигром") + 3, "ТИГРОМ", FONT_BLACK, 170, ORANGE, ...),
     (0.5, 2.9, "встреча с",  FONT_CAVEAT, 90,  WHITE,  "(w-tw)/2", "180", ""),
     (1.0, 2.9, "ТИГРОМ",     FONT_BLACK,  170, ORANGE, "(w-tw)/2", "260",
         "box=1:boxcolor=black@0.7:boxborderw=15"),
