@@ -1,25 +1,44 @@
 #!/usr/bin/env python3
-"""Convert script_plan.xlsx → README.md for a video-edits project.
+"""Convert storyboard file → README.md for a video-edits project.
 
-Reads the first sheet, expects 4 columns: Time | Visual | Voice script | Title.
-Writes a Markdown README with storyboard table.
-Idempotent: only writes if xlsx is newer than README (or README missing).
+Looks for storyboard in sources/ in priority order:
+  1. script_plan.tsv  (preferred — fast, robust to commas in voice script)
+  2. script_plan.csv
+  3. script_plan.xlsx (requires openpyxl)
+
+Expects 4 columns: Time | Visual | Voice script | Title.
+Idempotent: preserves manually-curated README, only regenerates auto-README
+when source is newer.
 """
 import sys
-import os
+import csv
 from pathlib import Path
 
-try:
-    import openpyxl
-except ImportError:
-    print("ERR: openpyxl missing", file=sys.stderr)
-    sys.exit(1)
+AUTO_MARKER = "Auto-generated from"
 
 
-def convert(xlsx_path: Path, readme_path: Path, project_name: str) -> bool:
-    wb = openpyxl.load_workbook(xlsx_path, data_only=True)
+def read_tsv_or_csv(path: Path, delimiter: str):
+    """Read tab- or comma-separated file, return (header, rows)."""
+    with path.open(encoding="utf-8") as f:
+        reader = csv.reader(f, delimiter=delimiter)
+        all_rows = [
+            [c.strip() for c in r[:4]]
+            for r in reader
+            if any(c.strip() for c in r[:4] if c is not None)
+        ]
+    if not all_rows:
+        return None, []
+    return all_rows[0], all_rows[1:]
+
+
+def read_xlsx(path: Path):
+    try:
+        import openpyxl
+    except ImportError:
+        print("ERR: openpyxl missing for xlsx", file=sys.stderr)
+        return None, []
+    wb = openpyxl.load_workbook(path, data_only=True)
     ws = wb[wb.sheetnames[0]]
-
     rows = []
     header = None
     for row in ws.iter_rows(values_only=True):
@@ -30,15 +49,38 @@ def convert(xlsx_path: Path, readme_path: Path, project_name: str) -> bool:
             header = first4
             continue
         rows.append(first4)
+    return header, rows
 
-    if not rows:
+
+def detect_source(sources_dir: Path):
+    """Return (path, format) of preferred storyboard file or (None, None)."""
+    for fname, fmt in [
+        ("script_plan.tsv", "tsv"),
+        ("script_plan.csv", "csv"),
+        ("script_plan.xlsx", "xlsx"),
+    ]:
+        p = sources_dir / fname
+        if p.exists():
+            return p, fmt
+    return None, None
+
+
+def convert(source_path: Path, fmt: str, readme_path: Path, project_name: str) -> bool:
+    if fmt == "tsv":
+        header, rows = read_tsv_or_csv(source_path, "\t")
+    elif fmt == "csv":
+        header, rows = read_tsv_or_csv(source_path, ",")
+    else:
+        header, rows = read_xlsx(source_path)
+
+    if not rows or not header:
         return False
 
     lines = [
         f"# {project_name}",
         "",
-        "> Auto-generated from `sources/script_plan.xlsx` by session-start hook.",
-        "> If you edit xlsx, this README is regenerated on next session start.",
+        f"> {AUTO_MARKER} `sources/{source_path.name}` by session-start hook.",
+        "> Edit the source file — README regenerates on next session start.",
         "",
         "## Раскадровка",
         "",
@@ -82,34 +124,39 @@ def main():
     for proj in sorted(projects_root.iterdir()):
         if not proj.is_dir():
             continue
-        xlsx = proj / "sources" / "script_plan.xlsx"
-        readme = proj / "README.md"
-        if not xlsx.exists():
+        sources_dir = proj / "sources"
+        if not sources_dir.is_dir():
             continue
-        # Preserve manually-curated README. Only overwrite if README missing
-        # OR previously auto-generated (contains the marker line).
-        AUTO_MARKER = "Auto-generated from `sources/script_plan.xlsx`"
+        source_path, fmt = detect_source(sources_dir)
+        if source_path is None:
+            continue
+
+        readme = proj / "README.md"
         readme_is_auto = (
             readme.exists()
             and AUTO_MARKER in readme.read_text(encoding="utf-8", errors="ignore")
         )
         if not readme.exists():
             should_write = True
-        elif readme_is_auto and xlsx.stat().st_mtime > readme.stat().st_mtime:
+        elif readme_is_auto and source_path.stat().st_mtime > readme.stat().st_mtime:
             should_write = True
         else:
             should_write = False
 
         if should_write:
             try:
-                if convert(xlsx, readme, proj.name):
-                    status.append(f"{proj.name} (xlsx→README updated)")
+                if convert(source_path, fmt, readme, proj.name):
+                    status.append(f"{proj.name} ({fmt}→README updated)")
                 else:
-                    status.append(f"{proj.name} (xlsx empty?)")
+                    status.append(f"{proj.name} ({fmt} empty?)")
             except Exception as e:
                 status.append(f"{proj.name} (ERR: {e})")
         else:
-            note = "manual README — preserved" if readme.exists() and not readme_is_auto else "up-to-date"
+            note = (
+                "manual README — preserved"
+                if readme.exists() and not readme_is_auto
+                else f"up-to-date ({fmt})"
+            )
             status.append(f"{proj.name} ({note})")
 
     if status:
