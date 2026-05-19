@@ -230,6 +230,45 @@ Yellow/pink/orange полоска-маркер ПОЗАДИ конкретных
 | Lifestyle-эстетика (бамбук, белый, маски) | Wellness, рекавери, путешествия | n3 |
 | Иноязычные сабы (UA/PL) | Расширение аудитории на СНГ | n3 |
 
+## refS_cyrillic_motivational_finished/ — Кириллический мотивационный продукт
+
+**Тип:** Готовый продукт (мини-Reels с кириллическим бренд-шрифтом)
+**Стиль:** Multi-tier display на чёрном + match-cut в B-roll
+**Подходит:** Один-в-один пара **Dela Gothic + Denistina** из cyrillic_font_pairs.md
+
+### Быстрый анализ (этап 1)
+
+**Тип хука:** Чёрный экран + одно слово огромным жирным Cyrillic sans за 0.5с.
+**Длительность:** 12-13с — мини-история (titlecard → B-roll).
+**Шрифт display:** Bold sans-serif Cyrillic (Heading Now Bold / Inter Bold / Dela Gothic).
+**Шрифт body/accent:** Handwriting Cyrillic (Caveat / Denistina).
+**Layout:** Multi-tier title на чёрном фоне (4 уровня размера/стиля) → match-cut на B-roll.
+**Темпоритм:** медленный, ~3с на titlecard → 3-4с на B-roll.
+**Переходы:** жёсткий cut, без whoosh.
+**Цветокор:** B&W titlecard + натуральный cinematic B-roll.
+**B-roll:** метафора к идее («скакалка» = «движение/повторение»).
+**Сообщение:** мотивашка одной фразой.
+
+### Конкретные ролики
+
+| Файл | Текст | B-roll |
+|---|---|---|
+| `s123_wasted_spirit_laptop.mp4` (12.9с) | «WASTED YOUR SPIRIT» (англ. поверх кадра) | Девушка за Macbook, синий свет, top-down с растением |
+| `s124_slomay_shablon_today_tomorrow.mp4` (12.7с) | «Сломай шаблон сегодня / Или Завтра» (multi-tier display + handwriting) | Девушка прыгает через скакалку на закате |
+
+### Принципы для переноса в бренд Натальи
+
+1. **Pair Dela Gothic + Caveat = твой Cyrillic display-stack** — этот стиль реализуется напрямую твоими шрифтами
+2. **Multi-tier title на чёрном (3с) → B-roll match-cut** — выдержанный ритм для эмоциональных моментов
+3. **B-roll-метафора в финале** = visual rhyme к титру. Подбирать B-roll так, чтобы он визуально рифмовался с message
+4. **Чёрно-белый title + цветной B-roll** = контрастный композиционный приём
+5. **Применение к sign-off:** «С Вами / Наталья Седова / + видео сделано с АИ» в multi-tier стиле на чёрном
+
+### Что НЕ копировать
+- ❌ Английский «WASTED / SPIRIT» — текст должен быть кириллицей
+- ❌ Натуральный B-roll если он не вписывается в твою эстетику
+- ❌ Тёмный мотивационный тон если видео энергичное
+
 ## refR_artzenmedia_premiere_tutorials/ — Premium Premiere Pro обучение
 
 **Тип:** Обучающий контент (Premiere Pro effect tutorials)
@@ -250,7 +289,7 @@ Yellow/pink/orange полоска-маркер ПОЗАДИ конкретных
 **Переходы:** screen-recording плавно показывает действия, match-cut между шагами.
 **Цветокор:** dark bokeh + светлое UI-окно — «студия монтажёра».
 
-### Серия Radial Blur (4 части)
+### Серия Radial Blur (6 частей + CTA)
 
 | Файл | Часть | Step |
 |---|---|---|
@@ -258,6 +297,9 @@ Yellow/pink/orange полоска-маркер ПОЗАДИ конкретных
 | `r22_radial_blur_pt2_preset.mp4` (9.6с) | 2 — Preset | Premiere preset показан в UI-окне, «RADIAL... WILL» |
 | `r30_radial_blur_pt3_duplicate_opacity.mp4` (10.4с) | 3 — Process | «DUPLICATE / OPACITY» — клики по таймлайну |
 | `r31_radial_blur_pt4_final_tweaks.mp4` (10.2с) | 4 — Tweaks | «THE / ANY» — финальные настройки в Effect Controls |
+| `r32_radial_blur_pt5_resize_angle.mp4` (7.6с) | 5 — Resize | «RESIZE / ANGLE» — Effect Controls параметры |
+| `r33_radial_blur_pt6_nest_rotation.mp4` (4.2с) | 6 — Nest | «NEST / ROTATION» — финализация слоёв |
+| `r34_radial_blur_outro_CTA.mp4` (4.6с) | 7 — CTA | «comment BLUR for FREE PRESET» — гигантский оранжевый текст поверх talking head, lead magnet |
 
 ### Креативные приёмы
 
