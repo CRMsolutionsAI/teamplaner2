@@ -135,6 +135,18 @@
   check_drawtext(text, font, size, x, y, layout="LEFT")  # WARN если overflow
   ```
 
+- `_utils/align_transcript.py` — выравнивает дословный текст транскрипта по `silencedetect` границам в voice.wav. **Запускать ОДИН РАЗ на этапе A1** перед раскадровкой:
+  ```
+  python3 _utils/align_transcript.py voice.wav sources/transcript.txt
+  → [0.66s] Встреча с тигром это не туристический аттракцион
+  → [4.06s] В полторах часах от Бангкока...
+  ```
+  Точный map «фраза → секунда» = титры не промахиваются (как было с «ОТКРЫВАЕТ ЖИВОТ» в project_002).
+
+- `_utils/start_iter.sh` — бустрапит новую итерацию: `./start_iter.sh project_NNN_X vN` → создаёт build dir + WORKFLOW_STATE.md + time_log.md + git commit.
+
+- `_utils/text_script_template.py` — стартер для text_vN.py с интегрированным `check_text_width`, fade-in 250мс, teal-orange grade.
+
 ## Запреты (из FEEDBACK истории)
 
 - ❌ AI-генерёные intro-картинки → ✅ только drawtext
