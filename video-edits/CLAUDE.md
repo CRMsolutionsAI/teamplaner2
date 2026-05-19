@@ -176,8 +176,11 @@ eq=contrast=1.10:saturation=1.10,colorbalance=rs=-0.04:bs=0.05:rm=0.03:bm=-0.04:
 [v][s][m]amix=inputs=3:duration=first:weights=1.0 1.0 0.6:normalize=0,alimiter=limit=0.95[out]
 
 # Pitch-shift -50 cents (для соцсетей чтоб не банили музыку по copyright fingerprint)
-# Math: -50¢ = pitch factor 2^(-50/1200) = 0.9716. Compensate speed with atempo 1.0292.
-ffmpeg -i v_final.mp4 -af "asetrate=44100*0.9716,aresample=44100,atempo=1.0292" \
+# Math: -50¢ = pitch factor 2^(-50/1200) = 0.9716. Speed compensated by atempo 1.0292.
+# ВАЖНО: первый aresample=44100 заставляет filter работать на известном SR (иначе
+# если исходник 96kHz/48kHz — asetrate=44100*0.9716 даст драматическое замедление).
+# Тестировано на project_002 v_final.mp4 — drift 23мс на 108s, OK.
+ffmpeg -i v_final.mp4 -af "aresample=44100,asetrate=44100*0.9716,aresample=44100,atempo=1.0292" \
   -c:v copy v_final_shifted.mp4
 ```
 

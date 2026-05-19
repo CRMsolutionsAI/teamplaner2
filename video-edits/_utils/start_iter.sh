@@ -69,7 +69,21 @@ echo "" >> "$TLOG"
 echo "<!-- ${ITER} started ${TODAY} ${NOW} — fill row in table above -->" >> "$TLOG"
 echo "✓ logged ${ITER} start in $TLOG"
 
-# 5. Reminder
+# 5. Auto-commit tracking artifacts (so they don't dangle as untracked)
+REPO_ROOT="$(git -C "$PROJ_DIR" rev-parse --show-toplevel 2>/dev/null || true)"
+if [ -n "$REPO_ROOT" ]; then
+  cd "$REPO_ROOT"
+  # Only add what we actually created (tracked files), no segs/
+  git add "$BUILD_DIR/WORKFLOW_STATE.md" "$TLOG" 2>/dev/null || true
+  if ! git diff --cached --quiet 2>/dev/null; then
+    git commit -m "Start ${PROJ_NAME} ${ITER}: bootstrap WORKFLOW_STATE + time_log" --quiet
+    echo "✓ committed iteration bootstrap"
+  else
+    echo "• nothing to commit (artifacts already tracked)"
+  fi
+fi
+
+# 6. Reminder
 cat <<EOF
 
 📋 Next steps for ${PROJ_NAME} ${ITER}:
