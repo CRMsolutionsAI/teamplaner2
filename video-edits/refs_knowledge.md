@@ -230,6 +230,59 @@ Yellow/pink/orange полоска-маркер ПОЗАДИ конкретных
 | Lifestyle-эстетика (бамбук, белый, маски) | Wellness, рекавери, путешествия | n3 |
 | Иноязычные сабы (UA/PL) | Расширение аудитории на СНГ | n3 |
 
+## refU_three_finished_styles/ — 3 разных архетипа готового продукта
+
+### u12 — Спонсорский кинематографический фильм (готовый продукт, 47.7с)
+**Автор:** @sam.john.creates × Invideo (partnership)
+**Стиль:** Premium short-film с film-credits рамкой
+- **Хук:** Chalk-style title «CHECK IN» + film-credits header `SAM.JOHN.CREATES / APRIL 2026 / INVIDEO`
+- **Шрифт:** Chalk-handwriting (white) для display + thin sans для credits
+- **Layout:** Full-bleed cinematic + footer «WRITTEN, DIRECTED AND EDITED BY... IN PARTNERSHIP WITH INVIDEO»
+- **Темпоритм:** медленный 8-10с/сцена
+- **Цветокор:** filmic deep shadows + warm key light
+- **Уникальный приём:** **Спонсорка-как-короткометражка** — рекламный контент в обёртке мини-фильма с титрами автора
+- **Применение для Натальи:** интеграции/спонсорки — рамка «снято и смонтировано Натальей Седовой / в партнёрстве с X»
+
+### u13 — Hook-with-money YouTube explainer (43.3с, 16:9)
+**Стиль:** YouTube-style hook с большим числом
+- **Хук:** Гигантское красное «$50,000 / FROM A PODCAST» поверх позирующего героя
+- **Шрифт display:** Ultra-bold sans, красный
+- **Шрифт sub:** Тонкий white sans для caption-определений (`[CLIPS] = a short, specific segment...`)
+- **Layout:** 16:9 horizontal (YouTube-формат)
+- **Темпоритм:** 5-7с/scene
+- **Уникальный приём:** **Hook с большим числом + caption-definition** — классический YouTube-gambit
+- **Применение:** контент про монетизацию, факты, цифры («X подписчиков за Y дней»)
+
+### u14 — Chalk neon sequential word-grow (готовый продукт, 7.3с)
+**Стиль:** Word-by-word grow с chalk-neon желтым
+- **Хук:** Word grow «BA» → «BAD ART» → «BAD ART IS BETTER THAN AI»
+- **Шрифт:** Yellow **chalk neon** handwriting — текстурный, как маркером
+- **Layout:** full-bleed cinematic moody → текст растёт со звуком каждое слово
+- **Цветокор:** blue night lighting + жёлто-неоновый chalk = высокий контраст
+- **Темпоритм:** очень быстрый, ~1с/word
+- **Уникальный приём:** **Word-grow chalk-neon** — фраза собирается на глазах, sentence-as-animation
+- **Применение:** манифесты, эмоциональные хуки (близок к refP graffiti, но с word-grow)
+
+### Сводка принципов в копилку
+
+| Принцип | Реализация в ffmpeg | Применение для Натальи |
+|---|---|---|
+| Film-credits header/footer | drawtext top-left + drawtext bottom-center | Спонсорские интеграции (premium-обёртка) |
+| Hook с money-number | Massive drawtext red ALL CAPS | Контент с числами и цифрами |
+| Caption-definition box | drawbox + drawtext двух размеров | Терминология в обучении |
+| Word-grow sequential | Несколько drawtext с `enable='between(t,a,b)'` | Манифесты, эмоциональные хуки |
+| Chalk-neon font | Шрифт типа Permanent Marker, fontcolor=жёлтый + shadowcolor | Декоративные заголовки |
+
+### ffmpeg для word-grow эффекта (u14)
+
+```bash
+drawtext=text='BA':enable='between(t,0,0.8)':fontcolor=yellow:fontsize=120:x=(w-tw)/2:y=h/2,
+drawtext=text='BAD ART':enable='between(t,0.8,1.6)':fontcolor=yellow:fontsize=120:x=(w-tw)/2:y=h/2,
+drawtext=text='BAD ART IS BE':enable='between(t,1.6,2.4)':fontcolor=yellow:fontsize=120:x=(w-tw)/2:y=h/2,
+drawtext=text='BAD ART IS BETTER THAN':enable='between(t,2.4,3.5)':fontcolor=yellow:fontsize=120:x=(w-tw)/2:y=h/2,
+drawtext=text='BAD ART IS BETTER THAN AI':enable='gte(t,3.5)':fontcolor=yellow:fontsize=120:x=(w-tw)/2:y=h/2
+```
+
 ## refT_diverse_archetypes/ — 5 разных архетипов готового продукта
 
 Каждый — отдельный мастер-стиль, не серия. Применять как пять разных «языков» под разные задачи.
