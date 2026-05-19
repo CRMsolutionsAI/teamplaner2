@@ -158,6 +158,20 @@
   ```
   Использует two-pass H.264 для точного попадания в bitrate.
 
+- `_utils/transcribe.py` — Whisper-транскрибация в облаке (модель загружается из репо, не из сети).
+  **Setup один раз на Mac:**
+  ```
+  pip install openai-whisper
+  python3 -c "import whisper; whisper.load_model('tiny')"
+  cp ~/.cache/whisper/tiny.pt video-edits/_utils/whisper-tiny.pt
+  git add video-edits/_utils/whisper-tiny.pt && git push
+  ```
+  Дальше я в облаке:
+  ```
+  python3 _utils/transcribe.py sources/narrator_audio.ogg
+  → sources/transcript.txt + sources/transcript_with_timestamps.txt
+  ```
+
 ## Запреты (из FEEDBACK истории)
 
 - ❌ AI-генерёные intro-картинки → ✅ только drawtext
