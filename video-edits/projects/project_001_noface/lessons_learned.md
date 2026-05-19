@@ -62,6 +62,26 @@
 - **B-roll Pexels IDs:** 28515504, 28515508, 30119040, 34740034, 36164500, 7010563, 36861553
 - **Filter script:** `filter_v5.txt` (Python-generated via `gen_filter.py`)
 
+## 🔴 КРИТИЧЕСКИЕ БАГИ v5 → ИСПРАВЛЕНЫ в v6
+
+### Баг 1: Голос диктора пропал из микса
+**Причина:** `[narrator]` был использован ДВАЖДЫ без `asplit`:
+1. Как sidechain-ключ для sidechaincompress (`[mraw][narrator]sidechaincompress...`)
+2. Как вход в amix (`[narrator][mducked]...amix`)
+
+ffmpeg не может дать один поток двум потребителям — голос ушёл в ноль.
+
+**Исправление:** `[12:a]atempo=1.09,loudnorm=...,asplit=2[narrator][narrator_sc]`
+— `[narrator_sc]` → sidechain ключ (duck музыку)
+— `[narrator]` → в финальный amix (первый план)
+
+**Правило навсегда:** при sidechain ducking ВСЕГДА делать `asplit=2` на вокале до отправки в два места.
+
+### Баг 2: Стоковые видео паспортов в продуктовой секции
+`pp_7010563` (passport hand) и `sv_36861553` (street vendor) использовались в M4 — секции показа продукта.
+
+**Исправление:** заменены на `IMG_0506.mp4` + `IMG_7983.png` (собственные файлы клиента).
+
 ## ⚠️ Технические нюансы для следующих сессий
 
 1. **ffmpeg требует libfreetype** для drawtext — стандартный `brew install ffmpeg` не включает его. Нужен `homebrew-ffmpeg/ffmpeg/ffmpeg` тап (включает freetype + libass). Установлен 2026-05-19.
