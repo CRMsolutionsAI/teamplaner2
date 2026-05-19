@@ -230,6 +230,59 @@ Yellow/pink/orange полоска-маркер ПОЗАДИ конкретных
 | Lifestyle-эстетика (бамбук, белый, маски) | Wellness, рекавери, путешествия | n3 |
 | Иноязычные сабы (UA/PL) | Расширение аудитории на СНГ | n3 |
 
+## refR_artzenmedia_premiere_tutorials/ — Premium Premiere Pro обучение
+
+**Тип:** Обучающий контент (Premiere Pro effect tutorials)
+**Автор:** @artzenmedia / Ben Aizen (verified, англоязычный)
+**Формат:** **Multi-part тутor** — один эффект разбит на 4+ Reels по 6-10с
+**Бренд:** тёмный bokeh-фон + светлое UI-окно с glow
+
+### Быстрый анализ (этап 1)
+
+**Тип хука:** «HOW TO CREATE A [EFFECT NAME]» белым жирным sans поверх talking head (0-2с).
+**Длительность:** 6-10с на часть, серия из 4+ частей.
+**Шрифт display:** Bold sans-serif (Inter / Helvetica Bold), белый, ALL CAPS.
+**Layout:** 16:9 horizontal, UI-окно по центру 60-70%, bokeh-фон позади.
+**Author-badge:** нижний-левый угол постоянно «Ben Aizen @artzenmedia ✓».
+**CTA:** нижний-правый 🔖 «Save for later! comment 'Blur' for the preset!»
+**Step-word:** КРУПНО белым по центру-низу — что делаем сейчас («DUPLICATE», «OPACITY», и т.д.).
+**Темпоритм:** медленный, чтобы UI-клики были видны.
+**Переходы:** screen-recording плавно показывает действия, match-cut между шагами.
+**Цветокор:** dark bokeh + светлое UI-окно — «студия монтажёра».
+
+### Серия Radial Blur (4 части)
+
+| Файл | Часть | Step |
+|---|---|---|
+| `r21_radial_blur_pt1_intro.mp4` (5.9с) | 1 — Intro | Title + talking head, «HOW TO CREATE A RADIAL BLUR» |
+| `r22_radial_blur_pt2_preset.mp4` (9.6с) | 2 — Preset | Premiere preset показан в UI-окне, «RADIAL... WILL» |
+| `r30_radial_blur_pt3_duplicate_opacity.mp4` (10.4с) | 3 — Process | «DUPLICATE / OPACITY» — клики по таймлайну |
+| `r31_radial_blur_pt4_final_tweaks.mp4` (10.2с) | 4 — Tweaks | «THE / ANY» — финальные настройки в Effect Controls |
+
+### Креативные приёмы
+
+| Приём | Реализация | Когда применять |
+|---|---|---|
+| **Multi-part разбивка эффекта** | Большой эффект → 4 Reels по 8с | Сложные туториалы (лучше для алгоритма Reels) |
+| **«Save for later! comment X for preset»** | drawtext + 🔖 emoji в углу | Lead magnet — обмен комментария на бонус |
+| **UI-окно с glow + bokeh** | overlay скриншота + boxblur фона | Premium-look для технических уроков |
+| **Author-badge постоянно** | drawtext нижний-левый с verified-точкой | Personal brand recognition |
+| **Step-word ON-каждом-кадре** | drawtext центр-низ ALL CAPS | Чтобы зритель не терялся в UI |
+| **Title-over-video** (не carded) | drawtext поверх живого кадра | Экономия секунд хука |
+
+### Что НЕ копировать
+- ❌ Английский язык буквально
+- ❌ Premiere Pro как инструмент (если у Натальи другой)
+- ❌ Тёмный bokeh-фон если бренд светлый
+- ❌ «artzenmedia» как название серии — это его бренд
+
+### Применение к Наталье
+
+- **Multi-part разбивка** — твои длинные туториалы про планер можно нарезать на 4-5 коротких Reels, по 8-12с каждый
+- **Lead magnet:** «комментарий ПЛАНЕР для шаблона» — даёшь шаблон-пресет, получаешь подписчиков
+- **Author-badge** — «Наталья Седова» в углу как стандартный элемент
+- **Step-word** — крупно «КАТАЛОГИЗИРУЙ», «ПОВТОРИ», «ДОБАВЬ» на каждом шаге
+
 ## refQ_marrssiankaa_tutorials/ — Обучающий контент о text-effects
 
 **Тип:** Обучающий контент (туториалы)
@@ -258,6 +311,7 @@ Yellow/pink/orange полоска-маркер ПОЗАДИ конкретных
 | `q16_3d_text_effect.mp4` (8.0с) | 3D объёмный текст | CapCut | Скрин кадра + наложение текста с offset для тени-глубины |
 | `q17_text_under_angle.mp4` (8.0с) | Текст под углом | CapCut | 4-6 уровней-копий текста со смещением для перспективы |
 | `q18_text_with_texture.mp4` (8.0с) | Текст с текстурой | CapCut | Маска текста по текстурному фону (бетон, стена, материал) |
+| `q20_subscribe_outro.mp4` (13.3с) | Outro серии | — | «ПОДПИШИСЬ! в следующей части тебя ждут другие креативные приёмы» — CTA-карточка серии |
 
 ### Креативные приёмы в копилку
 
