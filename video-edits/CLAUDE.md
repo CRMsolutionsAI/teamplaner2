@@ -147,6 +147,17 @@
 
 - `_utils/text_script_template.py` — стартер для text_vN.py с интегрированным `check_text_width`, fade-in 250мс, teal-orange grade.
 
+- `_utils/heic_to_png.sh` — конвертирует iPhone HEIC → PNG. Опционально `--transparent` для удаления фона (rembg).
+  ```
+  ./heic_to_png.sh photo.HEIC --transparent --output-dir sources/photos/
+  ```
+
+- `_utils/shrink_video.sh` — сжимает видео под лимит чат-аплоада (≤30MB).
+  ```
+  ./shrink_video.sh big_video.mov --target-mb 25 --output compact.mp4
+  ```
+  Использует two-pass H.264 для точного попадания в bitrate.
+
 ## Запреты (из FEEDBACK истории)
 
 - ❌ AI-генерёные intro-картинки → ✅ только drawtext
@@ -200,7 +211,20 @@ ffmpeg -i v_final.mp4 -af "aresample=44100,asetrate=44100*0.9716,aresample=44100
 
 - Pexels/Pixabay/Brave CDN **заблокированы из cloud-сессии** (egress allowlist).
 - MCP-коннекторы работают только локально на Mac. В облаке — получать файлы через `@`-аплоад.
-- Большие исходники (≥50MB) — в репо через git push, не через inline-картинки в чате.
+- Большие исходники (≥30MB chat upload limit / 50MB git limit) — в репо через git push, не через inline.
+- **Whisper ASR** — Python пакет установлен, но скачивание моделей openai заблокировано в облаке. `--asr` режим в `align_transcript.py` падает в heuristic fallback. **Используется только на Mac локально.**
+
+## Обработка iPhone/big-file файлов
+
+Когда заказчица присылает HEIC или большое видео:
+
+| Что | Workflow |
+|---|---|
+| **HEIC фото** | `@`-аплоад → я конвертирую через `_utils/heic_to_png.sh` (+ `--transparent` для PNG без фона) → результат в `sources/photos/` |
+| **Видео >30MB** | git push (нет лимита) → я подхватываю → если нужно отправить обратно: `_utils/shrink_video.sh --target-mb 25` |
+| **Аудио** | `@`-аплоад (обычно <30MB) → в `sources/narrator_audio.*` |
+
+Заказчице **не нужно** ничего конвертировать локально — она кидает оригиналы, я обрабатываю в cloud.
 
 ## История проектов
 
