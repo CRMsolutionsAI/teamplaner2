@@ -229,3 +229,77 @@ Yellow/pink/orange полоска-маркер ПОЗАДИ конкретных
 | Mini-сабы белым по центру-низу | Под cinematic кадры | n5 |
 | Lifestyle-эстетика (бамбук, белый, маски) | Wellness, рекавери, путешествия | n3 |
 | Иноязычные сабы (UA/PL) | Расширение аудитории на СНГ | n3 |
+
+## refM_text_effects/ — Серия premium-туториалов по text effects
+
+**Автор:** Неизвестен, англо/немецкоязычный design-tutorial аккаунт.
+**Стиль:** Premium production, минималистичный, дизайнерский.
+**Фишка серии:** Каждое видео = 1 текстовая техника, реализуемая в Premiere Pro / After Effects.
+
+### m1 — «creative TEXT» × paintbrush (3.4с)
+**Техника:** Text-object physical interaction
+- Кисть капает красной краской на синий фон
+- Текст «creative» (serif italic) появляется маленьким → big bold «TEXT» под ним
+- Бирюзовый чекмарк (✓) акцентом
+- Краска визуально «обтекает» текст
+- **Шрифты:** serif italic (decorative) + bold sans (display) — премиум-пара
+- **Цвет:** красный + синий + бирюзовый акцент
+
+### m2 — «BACK GROUND» × z-layering (4.0с)
+**Техника:** Person passes BEHIND massive text
+- Человек идёт к скамейке у океана
+- БОЛЬШИЕ жирные буквы «BACK GROUND» (стек по 2 строки)
+- Цвет анимируется: розовый → красный
+- Человек проходит ЗА текстом (text in foreground)
+- **Шрифт:** ультра-bold sans-serif (Helvetica Black / Druk)
+- **Цвет:** magenta → crimson по ходу видео
+
+### m3 — «stack den TEXT wie ein Pro» × multilayer (2.3с)
+**Техника:** 3-tier multi-size composition
+- Парень на жёлтом стуле в парке
+- 3 уровня текста в одной композиции:
+  - handwriting script красным «stack den» (decorative)
+  - **БОЛЬШОЕ** жирное чёрное «TEXT» (display)
+  - мелкое красное «wie ein Pro» (caption)
+- Иерархия: decorative → display → caption
+- **Язык:** немецкий
+- **Шрифты:** handwriting (Caveat-like) + ultra-bold sans + thin sans
+
+### m4 — «OUTLINE» × masking через объект (3.4с)
+**Техника:** Text wraps around subject via masking
+- Top-down кадр (как ref7 «Wes Anderson») — человек с красным MacBook
+- ОГРОМНОЕ красное «OUTLINE» поперёк кадра
+- Часть текста ЗА человеком, часть ПЕРЕД — masking создаёт «прохождение через текст»
+- Чистый белый фон делает эффект ярким
+- **Шрифт:** display ultra-bold (Druk Wide / Roboto Condensed Black)
+- **Композиция:** top-down + минимализм + один акцентный цвет
+
+### m5 — «blend mode DIFFERENCE» × цвето-инверсия (5.1с)
+**Техника:** Premiere blend-mode «Difference» для интеграции текста с фоном
+- Скриншот таймлайна Premiere Pro в нижней трети
+- Превью: кисть+красная краска под текстом
+- Текст «blend mode DIFFERENCE» (serif italic + bold sans)
+- Demo переключения Blend Mode: Normal → Darken → Difference
+- При «Difference» цвета инвертируются RGB-фильтром (красный → циан)
+- **Техническая инструкция:** Effect Controls → Opacity → Blend Mode → Difference
+
+### Сводка техник из refM
+
+| Техника | Реализация | Когда применять |
+|---|---|---|
+| Text-object physical interaction | Layer order + match move | Когда есть «герой-объект» (краска, продукт) |
+| Z-layering (subject behind text) | Roto/mask на субъекте | Driveby/walkby-сцены |
+| 3-tier multi-size stack | handwriting + display + caption в одной плоскости | Заголовки с подзаголовками |
+| Text-wrap masking через объект | Mask + invert на верхнем слое | Top-down композиции |
+| Blend Mode «Difference» | Effect Controls в Premiere | Цвето-инверсия для контраста |
+| Premium шрифт-пара (serif italic + bold sans) | На display-заголовках | Premium-эстетика |
+| Один акцентный цвет (красный/розовый) на всём | Колор-консистентность | Бренд-видео |
+| Top-down композиция | Камера сверху | Эстетика + чтение текста |
+
+### Применение к бренду Натальи
+
+Из refM можно взять:
+- **3-tier multi-size stack** (m3) — для заголовков «N приёмов / N эффектов» с handwriting Caveat сверху + Roboto Condensed Bold + DejaVu Sans мелким снизу
+- **Z-layering** (m2) — когда Наталья в кадре, бренд-текст «WISPR» / «PLANNER» может быть позади неё
+- **Один акцентный #FF5722** на всю композицию — уже делаем
+- **Top-down композиция** (m4) — для будущих видео с UI/laptop в кадре
