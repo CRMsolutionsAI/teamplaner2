@@ -1,6 +1,6 @@
 #!/bin/bash
-# render_v5.sh — Project 001 FINAL v6
-# v6 changes: own covers for M1 hook, fixed IMG_0620 scale, single finale hero, louder voice
+# render_v5.sh — Project 001 FINAL v7
+# v7 changes: 4 new own clips in M4+finale for faster cuts, fin_hero delayed to 46s
 set -e
 
 FFMPEG=/opt/homebrew/bin/ffmpeg
@@ -14,25 +14,29 @@ SFX=/Users/natasa/teamplaner2/video-edits/sfx
 FILT=$PRJ/filter_v5.txt
 OUT=$PRJ/v_final.mp4
 
-echo "=== Project 001 v6 render starting ==="
+echo "=== Project 001 v7 render starting ==="
 
-# Input layout (16 total):
-# [0]  loop1       cover_green_dragon_clean.png  → M1 right + finale hero
+# Input layout (20 total):
+# [0]  loop1       cover_green_dragon_clean.png  → M1 right + finale hero (46-49.1s)
 # [1]  loop1       cover_black_mustache_clean.png → M1 left cover
 # [2]              nm_28515504                   → M2 night market people (ambient)
-# [3]              IMG_0620 lanterns             → M2 own footage (fixed scale)
+# [3]              IMG_0620 lanterns             → M2 own footage
 # [4]              nm_28515508                   → M2 woman food (ambient)
 # [5]              lw_34740034 leather           → M3 ambient craft
 # [6]              IMG_0932                      → M3 own footage (split)
 # [7]              ch_36164500 blacksmith        → M3 ambient
 # [8]  stream_loop IMG_1110                      → M4 own footage
 # [9]              IMG_0506                      → M4 own footage
-# [10] loop1       IMG_7983.png                  → M4 product photo
-# [11]             narrator audio
-# [12]             music
-# [13]             dust_swoosh SFX
-# [14]             cartoon_bubble_pop
-# [15]             film_title_transition
+# [10] loop1       IMG_7983.png                  → M4 product photo (2s only, 36-38s)
+# [11]             IMG_5644_own.mov              → M4 new cut (33.5-36s)
+# [12]             IMG_5635_own.mov              → Finale new cut (39.9-43s)
+# [13]             IMG_5642_own.mov              → M4 tail new cut (38-40s)
+# [14]             IMG_1756_own.mov              → Finale 4K cut (43-46s)
+# [15]             narrator audio
+# [16]             music
+# [17]             dust_swoosh SFX
+# [18]             cartoon_bubble_pop
+# [19]             film_title_transition
 
 $FFMPEG -y \
   -loop 1             -i "$PHO/cover_green_dragon_clean.png" \
@@ -46,6 +50,10 @@ $FFMPEG -y \
   -stream_loop -1     -i "$FTG/IMG_1110.mp4" \
                       -i "$FTG/IMG_0506.mp4" \
   -loop 1             -i "$PHO/IMG_7983_passport_covers_finished.png" \
+                      -i "$FTG/IMG_5644_own.mov" \
+                      -i "$FTG/IMG_5635_own.mov" \
+                      -i "$FTG/IMG_5642_own.mov" \
+                      -i "$FTG/IMG_1756_own.mov" \
                       -i "$SRC/narrator_audio_53.5s.ogg" \
                       -i "$MUSIC/aqualina_orange_hues_201s.mp3" \
                       -i "$SFX/dust_swoosh.mp3" \
@@ -71,5 +79,4 @@ $FFPROBE -v error -select_streams v:0 \
 $FFPROBE -v error -select_streams a:0 \
   -show_entries stream=codec_name,channels,bit_rate \
   -of default=noprint_wrappers=1 "$OUT"
-$FFPROBE -v error -show_entries format_tags=title -of default=noprint_wrappers=1 "$OUT" 2>/dev/null || true
 echo "=== DONE ==="
