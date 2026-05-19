@@ -147,9 +147,9 @@
 
 - `_utils/text_script_template.py` — стартер для text_vN.py с интегрированным `check_text_width`, fade-in 250мс, teal-orange grade.
 
-- `_utils/heic_to_png.sh` — конвертирует iPhone HEIC → PNG. Опционально `--transparent` для удаления фона (rembg).
+- `_utils/prep_photo.sh` — конвертирует iPhone HEIC → PNG. Опционально `--transparent` для удаления фона (rembg).
   ```
-  ./heic_to_png.sh photo.HEIC --transparent --output-dir sources/photos/
+  ./prep_photo.sh photo.HEIC --transparent --output-dir sources/photos/
   ```
 
 - `_utils/shrink_video.sh` — сжимает видео под лимит чат-аплоада (≤30MB).
@@ -220,7 +220,7 @@ ffmpeg -i v_final.mp4 -af "aresample=44100,asetrate=44100*0.9716,aresample=44100
 
 | Что | Workflow |
 |---|---|
-| **HEIC фото** | `@`-аплоад → я конвертирую через `_utils/heic_to_png.sh` (+ `--transparent` для PNG без фона) → результат в `sources/photos/` |
+| **HEIC фото** | `@`-аплоад → я конвертирую через `_utils/prep_photo.sh` (+ `--transparent` для PNG без фона) → результат в `sources/photos/` |
 | **Видео >30MB** | git push (нет лимита) → я подхватываю → если нужно отправить обратно: `_utils/shrink_video.sh --target-mb 25` |
 | **Аудио** | `@`-аплоад (обычно <30MB) → в `sources/narrator_audio.*` |
 
