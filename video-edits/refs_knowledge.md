@@ -230,6 +230,72 @@ Yellow/pink/orange полоска-маркер ПОЗАДИ конкретных
 | Lifestyle-эстетика (бамбук, белый, маски) | Wellness, рекавери, путешествия | n3 |
 | Иноязычные сабы (UA/PL) | Расширение аудитории на СНГ | n3 |
 
+## refT_diverse_archetypes/ — 5 разных архетипов готового продукта
+
+Каждый — отдельный мастер-стиль, не серия. Применять как пять разных «языков» под разные задачи.
+
+### t125 — Video-essay long-form с painted titlecards (65с)
+**Тип:** Готовый продукт (видео-эссе)
+**Стиль:** Watercolor/painted titlecards + cinematic dark grade + brush handwriting
+- **Хук:** Painted illustration (рисованное лицо + brush-текст «SOMETHING MUCH WORSE»)
+- **Шрифт:** Brush/permanent marker, белый handwriting
+- **Темпоритм:** медленный 8-10с/сцена, для размышления
+- **Уникальный приём:** **Иллюстрации как titlecards** — премиум для эссе
+- **Применение:** Рефлексивные/философские видео Натальи
+
+### t126 — Design-portfolio split-screen (52с) @per_aspera_ad_astra
+**Тип:** Готовый продукт (портфолио)
+**Стиль:** Split-screen `[РАСКАДРОВКА]` vs `[МОНТАЖ]` — до/после
+- **Хук:** Split-screen заглавный «процесс vs результат» — instant value
+- **Шрифт display:** Inter Bold/Roboto Black ALL CAPS
+- **Шрифт meta:** Mono для метаданных (`SOFT: FIGMA / AFTER EFFECTS / 5 DAYS`)
+- **Уникальный приём:** **Split-screen comparison** на каждой работе
+- **Применение:** Кейсы Натальи «исходник → финальное видео» в одном кадре
+
+### t127 — Talking-head + audio waveform UI (16с)
+**Тип:** Обучающий контент (про звук)
+**Стиль:** Waveform как UI-элемент поверх talking head
+- **Хук:** Audio waveform график с лейблом «whoosh» сверху кадра
+- **Layout:** waveform top + person centre + captions bottom
+- **Уникальный приём:** **Audio wave как UI** — красивее чем UI-скрин
+- **Применение:** Туториалы Натальи про SFX/звук в монтаже
+
+### t10 — Travel/lifestyle с AR UI overlay (22с)
+**Тип:** Готовый продукт (travel vlog)
+**Стиль:** Phone UI наложен на реальные кадры (Wi-Fi/Bluetooth toggles в воздухе)
+- **Хук:** AR-стиль iOS Control Center поверх живого кадра путешествия
+- **Уникальный приём:** **AR-style UI overlay** на live footage = «digital nomad»
+- **Применение:** Tech-обзоры, путешествия с гаджетами
+
+### t11 — Multi-tier text с gradient на ключевом слове (32с)
+**Тип:** Готовый продукт (personal brand story)
+**Стиль:** Big text overlay с two-tone gradient → cuts to B-roll
+- **Хук:** Multi-tier «I'm not a / **DESIGNER** / never have been» с бирюзово-фиолетовым gradient на DESIGNER
+- **Шрифт display:** Inter Black/heavy sans
+- **Цветокор:** moody blue studio → natural cinematic B-roll
+- **Уникальный приём:** **Gradient на одном ключевом слове** среди обычных как акцент
+- **Применение:** Бренд-видео Натальи — «Я не / **МОНТАЖЁР** / а творец историй» с gradient на ключевом слове
+
+### Сводка принципов
+
+| Принцип | Применение для Натальи |
+|---|---|
+| Painted/illustrated titlecards | Видео-эссе, рефлексивный контент |
+| Split-screen process/result | Кейсы «до vs после монтажа», демо планер-контента |
+| Audio waveform как UI | Туториалы про звук, sound-design |
+| AR UI overlay на live footage | Travel/обзорный контент, гаджеты |
+| Gradient на одном ключевом слове | Бренд-видео с акцентом на ключевом термине |
+
+### ffmpeg-эквиваленты новых техник
+
+| Эффект | ffmpeg реализация |
+|---|---|
+| Painted titlecard | PNG с alpha от illustrator → `overlay` поверх кадра |
+| Split-screen `[A]` vs `[B]` | `hstack` или `xstack=layout=0_0\|w0_0` для side-by-side; `drawbox` для рамок |
+| Audio waveform overlay | `showwaves=mode=line:s=720x100:colors=0x00FF00`, потом `overlay` на кадр |
+| AR UI overlay | PNG-mockup iOS UI → `overlay` с прозрачностью; для анимации — keyframed positions |
+| Gradient на тексте | drawtext не поддерживает gradient напрямую → 2 drawtext c разным цветом через `crop+stack`, либо ImageMagick PNG + overlay |
+
 ## refS_cyrillic_motivational_finished/ — Кириллический мотивационный продукт
 
 **Тип:** Готовый продукт (мини-Reels с кириллическим бренд-шрифтом)
