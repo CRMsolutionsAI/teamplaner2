@@ -25,16 +25,29 @@ from pathlib import Path
 
 
 MODEL_DIR = Path(__file__).resolve().parent
-MODEL_NAMES = ["whisper-tiny.pt", "tiny.pt", "whisper-base.pt", "base.pt"]
+# Priority: larger models first (better accuracy). Found-first wins.
+MODEL_NAMES = [
+    ("whisper-large-v3.pt", "large-v3"),
+    ("whisper-large-v2.pt", "large-v2"),
+    ("whisper-large.pt",    "large"),
+    ("whisper-medium.pt",   "medium"),
+    ("whisper-small.pt",    "small"),
+    ("whisper-base.pt",     "base"),
+    ("base.pt",             "base"),
+    ("whisper-tiny.pt",     "tiny"),
+    ("tiny.pt",             "tiny"),
+]
 
 
 def find_model() -> tuple[Path, str]:
-    """Find local Whisper model in _utils/. Return (path, model_size)."""
-    for name in MODEL_NAMES:
+    """Find local Whisper model in _utils/. Return (path, model_size).
+
+    Searches in priority order (largest → smallest) so if user pushes 'base'
+    it gets preferred over 'tiny'.
+    """
+    for name, size in MODEL_NAMES:
         path = MODEL_DIR / name
-        if path.exists():
-            # Determine model size from filename
-            size = "tiny" if "tiny" in name else "base"
+        if path.exists() and not path.is_symlink():
             return path, size
     return None, None
 
@@ -87,9 +100,12 @@ def main():
     p.add_argument("audio", type=Path)
     p.add_argument("--language", default="ru")
     p.add_argument("--output", type=Path,
-                   help="Plain text output (default: <audio>_transcript.txt next to audio)")
+                   help="Plain text output path")
     p.add_argument("--with-timestamps", type=Path,
-                   help="Also write timestamped version (default: <audio>_transcript_ts.txt)")
+                   help="Timestamped version path")
+    p.add_argument("--save-to-project", type=str, metavar="PROJ_NAME",
+                   help="Save transcript directly to projects/<PROJ_NAME>/sources/transcript.txt "
+                        "(auto-resolves repo path). Overrides --output.")
     args = p.parse_args()
 
     if not args.audio.exists():
@@ -102,11 +118,24 @@ def main():
         print(f"ERR: {e}", file=sys.stderr)
         sys.exit(2)
 
-    out_plain = args.output or args.audio.parent / "transcript.txt"
+    # Resolve outputs
+    if args.save_to_project:
+        # Find projects/ root relative to this script
+        projects_root = Path(__file__).resolve().parents[1] / "projects"
+        proj_dir = projects_root / args.save_to_project
+        if not proj_dir.is_dir():
+            print(f"ERR: project not found: {proj_dir}", file=sys.stderr)
+            sys.exit(3)
+        out_plain = proj_dir / "sources" / "transcript.txt"
+        out_ts = proj_dir / "sources" / "transcript_with_timestamps.txt"
+        out_plain.parent.mkdir(parents=True, exist_ok=True)
+    else:
+        out_plain = args.output or args.audio.parent / "transcript.txt"
+        out_ts = args.with_timestamps or args.audio.parent / "transcript_with_timestamps.txt"
+
     out_plain.write_text(text + "\n", encoding="utf-8")
     print(f"✓ {out_plain}  ({len(text)} chars)", file=sys.stderr)
 
-    out_ts = args.with_timestamps or args.audio.parent / "transcript_with_timestamps.txt"
     with out_ts.open("w", encoding="utf-8") as f:
         for seg in segments:
             f.write(f"[{seg['start']:6.2f} → {seg['end']:6.2f}] {seg['text'].strip()}\n")
