@@ -1,0 +1,43 @@
+[0:v]
+
+drawtext=fontfile=/usr/share/fonts/truetype/roboto/unhinted/RobotoCondensed-Bold.ttf:text='ОБРАТИ ВНИМАНИЕ':fontcolor=0xFF5722:fontsize=72:x=(w-text_w)/2:y=120:enable='between(t,0.5,3)':alpha='if(lt(t,0.8),(t-0.5)/0.3,if(gt(t,2.7),max(0,1-(t-2.7)/0.3),1))',
+
+drawtext=fontfile=/usr/share/fonts/truetype/roboto/unhinted/RobotoCondensed-Bold.ttf:text='СЕЙФ':fontcolor=0xFFFFFF:fontsize=180:x=(w-text_w)/2:y=120:enable='between(t,3,7)':alpha='if(lt(t,3.2),(t-3)/0.2,if(gt(t,6.5),max(0,1-(t-6.5)/0.5),1))',
+drawtext=fontfile=video-edits/fonts/Caveat.ttf:text='для документов':fontcolor=0xFF5722:fontsize=80:x=(w-text_w)/2:y=320:enable='between(t,3.8,7)':alpha='if(lt(t,4.1),(t-3.8)/0.3,if(gt(t,6.5),max(0,1-(t-6.5)/0.5),1))',
+drawtext=fontfile=/usr/share/fonts/truetype/roboto/unhinted/RobotoCondensed-Bold.ttf:text='СУВЕНИР?':fontcolor=0xFFFFFF:fontsize=120:x=(w-text_w)/2:y=1600:enable='between(t,4.5,7)':alpha='if(lt(t,4.8),(t-4.5)/0.3,if(gt(t,6.5),max(0,1-(t-6.5)/0.5),1))',
+
+drawtext=fontfile=/usr/share/fonts/truetype/roboto/unhinted/RobotoCondensed-Bold.ttf:text='НОЧНОЙ':fontcolor=0xFFFFFF:fontsize=130:x=(w-text_w)/2:y=200:enable='between(t,7.3,12)':alpha='if(lt(t,7.6),(t-7.3)/0.3,if(gt(t,11.5),max(0,1-(t-11.5)/0.5),1))',
+drawtext=fontfile=/usr/share/fonts/truetype/roboto/unhinted/RobotoCondensed-Bold.ttf:text='РЫНОК':fontcolor=0xFF5722:fontsize=130:x=(w-text_w)/2:y=340:enable='between(t,7.6,12)':alpha='if(lt(t,7.9),(t-7.6)/0.3,if(gt(t,11.5),max(0,1-(t-11.5)/0.5),1))',
+drawtext=fontfile=video-edits/fonts/Caveat.ttf:text='перформанс':fontcolor=0xFFFFFF:fontsize=90:x=(w-text_w)/2:y=1620:enable='between(t,9,12)':alpha='if(lt(t,9.3),(t-9)/0.3,if(gt(t,11.5),max(0,1-(t-11.5)/0.5),1))',
+
+drawtext=fontfile=/usr/share/fonts/truetype/roboto/unhinted/RobotoCondensed-Bold.ttf:text='ВЫБИРАЕШЬ':fontcolor=0xFFFFFF:fontsize=88:x=(w-text_w)/2:y=200:enable='between(t,12.3,17)':alpha='if(lt(t,12.6),(t-12.3)/0.3,if(gt(t,16.5),max(0,1-(t-16.5)/0.5),1))',
+drawtext=fontfile=/usr/share/fonts/truetype/roboto/unhinted/RobotoCondensed-Bold.ttf:text='СВОЙ ЦВЕТ':fontcolor=0xFF5722:fontsize=110:x=(w-text_w)/2:y=300:enable='between(t,13.2,17)':alpha='if(lt(t,13.5),(t-13.2)/0.3,if(gt(t,16.5),max(0,1-(t-16.5)/0.5),1))',
+drawtext=fontfile=/usr/share/fonts/truetype/roboto/unhinted/RobotoCondensed-Bold.ttf:text='+ АКСЕССУАРЫ':fontcolor=0xFFFFFF:fontsize=70:x=(w-text_w)/2:y=1620:enable='between(t,15,17)':alpha='if(lt(t,15.3),(t-15)/0.3,if(gt(t,16.5),max(0,1-(t-16.5)/0.5),1))',
+
+drawtext=fontfile=/usr/share/fonts/truetype/roboto/unhinted/RobotoCondensed-Bold.ttf:text='ЗНАЧКИ':fontcolor=0xFFFFFF:fontsize=130:x=(w-text_w)/2:y=200:enable='between(t,17.3,20)':alpha='if(lt(t,17.6),(t-17.3)/0.3,if(gt(t,19.5),max(0,1-(t-19.5)/0.5),1))',
+drawtext=fontfile=video-edits/fonts/Caveat.ttf:text='лотос / дракон / самолёт':fontcolor=0xFF5722:fontsize=70:x=(w-text_w)/2:y=1620:enable='between(t,18,20)':alpha='if(lt(t,18.3),(t-18)/0.3,if(gt(t,19.5),max(0,1-(t-19.5)/0.5),1))',
+
+drawtext=fontfile=/usr/share/fonts/truetype/roboto/unhinted/RobotoCondensed-Bold.ttf:text='МАСТЕР':fontcolor=0xFFFFFF:fontsize=130:x=(w-text_w)/2:y=200:enable='between(t,20.3,25)':alpha='if(lt(t,20.6),(t-20.3)/0.3,if(gt(t,24.5),max(0,1-(t-24.5)/0.5),1))',
+drawtext=fontfile=/usr/share/fonts/truetype/roboto/unhinted/RobotoCondensed-Bold.ttf:text='ЗА РАБОТОЙ':fontcolor=0xFF5722:fontsize=88:x=(w-text_w)/2:y=340:enable='between(t,20.6,25)':alpha='if(lt(t,20.9),(t-20.6)/0.3,if(gt(t,24.5),max(0,1-(t-24.5)/0.5),1))',
+drawtext=fontfile=video-edits/fonts/Caveat.ttf:text='пару минут магии':fontcolor=0xFFFFFF:fontsize=80:x=(w-text_w)/2:y=1620:enable='between(t,22,25)':alpha='if(lt(t,22.3),(t-22)/0.3,if(gt(t,24.5),max(0,1-(t-24.5)/0.5),1))',
+
+drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:text='NATALIA':fontcolor=0xFF5722:fontsize=80:x=(w-text_w)/2:y=200:enable='between(t,25.3,28)':alpha='if(lt(t,25.6),(t-25.3)/0.3,if(gt(t,27.5),max(0,1-(t-27.5)/0.5),1))':box=1:boxcolor=black:boxborderw=15,
+drawtext=fontfile=video-edits/fonts/Caveat.ttf:text='выбивают имя':fontcolor=0xFFFFFF:fontsize=70:x=(w-text_w)/2:y=320:enable='between(t,25.6,28)':alpha='if(lt(t,25.9),(t-25.6)/0.3,if(gt(t,27.5),max(0,1-(t-27.5)/0.5),1))',
+drawtext=fontfile=/usr/share/fonts/truetype/roboto/unhinted/RobotoCondensed-Bold.ttf:text='ТУК ТУК':fontcolor=0xFF5722:fontsize=120:x=(w-text_w)/2:y=1500:enable='between(t,26,28)':alpha='if(lt(t,26.3),(t-26)/0.3,if(gt(t,27.5),max(0,1-(t-27.5)/0.5),1))',
+
+drawtext=fontfile=/usr/share/fonts/truetype/roboto/unhinted/RobotoCondensed-Bold.ttf:text='РУЧНАЯ':fontcolor=0xFFFFFF:fontsize=110:x=(w-text_w)/2:y=200:enable='between(t,28.3,33)':alpha='if(lt(t,28.6),(t-28.3)/0.3,if(gt(t,32.5),max(0,1-(t-32.5)/0.5),1))',
+drawtext=fontfile=/usr/share/fonts/truetype/roboto/unhinted/RobotoCondensed-Bold.ttf:text='СБОРКА':fontcolor=0xFF5722:fontsize=130:x=(w-text_w)/2:y=320:enable='between(t,28.6,33)':alpha='if(lt(t,28.9),(t-28.6)/0.3,if(gt(t,32.5),max(0,1-(t-32.5)/0.5),1))',
+drawtext=fontfile=video-edits/fonts/Caveat.ttf:text='тактильная надёжность':fontcolor=0xFFFFFF:fontsize=70:x=(w-text_w)/2:y=1620:enable='between(t,30,33)':alpha='if(lt(t,30.3),(t-30)/0.3,if(gt(t,32.5),max(0,1-(t-32.5)/0.5),1))',
+
+drawtext=fontfile=/usr/share/fonts/truetype/roboto/unhinted/RobotoCondensed-Bold.ttf:text='ЦЕНА':fontcolor=0xFFFFFF:fontsize=100:x=(w-text_w)/2:y=160:enable='between(t,33.5,47)':alpha='if(lt(t,33.8),(t-33.5)/0.3,if(gt(t,46.5),max(0,1-(t-46.5)/0.5),1))',
+drawtext=fontfile=/usr/share/fonts/truetype/roboto/unhinted/RobotoCondensed-Bold.ttf:text='120':fontcolor=0xFFFFFF:fontsize=300:x=(w-text_w)/2:y=300:enable='between(t,34,47)':alpha='if(lt(t,34.4),(t-34)/0.4,if(gt(t,46.5),max(0,1-(t-46.5)/0.5),1))':box=1:boxcolor=0xFF5722:boxborderw=20,
+drawtext=fontfile=/usr/share/fonts/truetype/roboto/unhinted/RobotoCondensed-Bold.ttf:text='БАТ':fontcolor=0xFF5722:fontsize=110:x=(w-text_w)/2:y=620:enable='between(t,34.4,47)':alpha='if(lt(t,34.7),(t-34.4)/0.3,if(gt(t,46.5),max(0,1-(t-46.5)/0.5),1))',
+
+drawtext=fontfile=/usr/share/fonts/truetype/roboto/unhinted/RobotoCondensed-Bold.ttf:text='= 161 ГРН':fontcolor=0xFFFFFF:fontsize=72:x=(w-text_w)/2:y=1480:enable='between(t,36,47)':alpha='if(lt(t,36.4),(t-36)/0.4,if(gt(t,46.5),max(0,1-(t-46.5)/0.5),1))',
+drawtext=fontfile=video-edits/fonts/Caveat.ttf:text='не чехол - эмоция':fontcolor=0xFF5722:fontsize=90:x=(w-text_w)/2:y=1600:enable='between(t,40,47)':alpha='if(lt(t,40.3),(t-40)/0.3,if(gt(t,46.5),max(0,1-(t-46.5)/0.5),1))',
+
+drawtext=fontfile=/usr/share/fonts/truetype/roboto/unhinted/RobotoCondensed-Bold.ttf:text='ВАШ':fontcolor=0xFFFFFF:fontsize=180:x=(w-text_w)/2:y=900:enable='between(t,47.3,53.4)':alpha='if(lt(t,47.6),(t-47.3)/0.3,1)',
+drawtext=fontfile=/usr/share/fonts/truetype/roboto/unhinted/RobotoCondensed-Bold.ttf:text='ПАСПОРТ':fontcolor=0xFFFFFF:fontsize=180:x=(w-text_w)/2:y=1080:enable='between(t,47.8,53.4)':alpha='if(lt(t,48.1),(t-47.8)/0.3,1)',
+drawtext=fontfile=video-edits/fonts/Caveat.ttf:text='— ваша история':fontcolor=0xFF5722:fontsize=110:x=(w-text_w)/2:y=1340:enable='between(t,48.8,53.4)':alpha='if(lt(t,49.1),(t-48.8)/0.3,1)'
+
+[v_out]
