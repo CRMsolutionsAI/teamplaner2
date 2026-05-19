@@ -118,13 +118,22 @@
 - [ ] Sidechain ducking настроен
 - [ ] SFX точно на момент текста (не на 0.1с раньше/позже)
 - [ ] Весь текст в safe zone
-- [ ] Sidebar text fits (5 chars / 380px max)
+- [ ] **Sidebar text fits** — прогнать `_utils/check_text_width.py` на text events перед рендером
 - [ ] Title-визуал alignment проверен
 - [ ] Нет sin-зума и тряски на фото
 - [ ] Резки каждые 2-4с
 - [ ] Финальная карточка/CTA на чёрном с акцентным шрифтом
 - [ ] Музыка категорийно соответствует теме (+ swell на 2 key moments)
 - [ ] Fade-in 250мс на все drawtext
+- [ ] **После approve:** `lessons_learned.md` заполнен (2-3 plus + 1 техническое усложнение)
+
+## Утилиты
+
+- `_utils/check_text_width.py` — проверяет влезает ли drawtext в свой sidebar/top/bottom slot. Использовать ДО рендера в text_*.py:
+  ```python
+  from video_edits._utils.check_text_width import check_drawtext
+  check_drawtext(text, font, size, x, y, layout="LEFT")  # WARN если overflow
+  ```
 
 ## Запреты (из FEEDBACK истории)
 
